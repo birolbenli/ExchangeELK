@@ -36,7 +36,6 @@ thread_pool.search.queue_size: 500
 # ---- ILM / Monitoring --------------------------------------
 xpack.security.enabled: false
 xpack.monitoring.collection.enabled: true
-xpack.ilm.enabled: true
 
 # ---- Logging -----------------------------------------------
 logger.org.elasticsearch.discovery: WARN
