@@ -1,0 +1,139 @@
+version: '3.8'
+
+# ================================================================
+# Tüm veriler sistem diskine değil 2. diske (/data) yazılır.
+# Disk kurulumu için önce scripts/setup-disk.sh çalıştırın.
+# ================================================================
+
+services:
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.11.1
+    container_name: elasticsearch
+    environment:
+      - node.name=elasticsearch
+      - cluster.name=exchange-elk-cluster
+      - discovery.type=single-node
+      - bootstrap.memory_lock=true
+      # 32 GB RAM için: ES JVM = RAM'in %50'si, max 32 GB; burada 16 GB
+      - "ES_JAVA_OPTS=-Xms16g -Xmx16g"
+      - xpack.security.enabled=false
+      - xpack.security.enrollment.enabled=false
+      - xpack.security.http.ssl.enabled=false
+      - xpack.security.transport.ssl.enabled=false
+      # ILM/snapshot için snapshot repo tanımla
+      - path.repo=/data/elasticsearch/backups
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
+    volumes:
+      # --- 2. disk bind mount'ları ---
+      - /data/elasticsearch/data:/usr/share/elasticsearch/data
+      - /data/elasticsearch/logs:/usr/share/elasticsearch/logs
+      - /data/elasticsearch/backups:/data/elasticsearch/backups
+      # --- config (repo'dan, read-only) ---
+      - ./elasticsearch/config/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml:ro
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    networks:
+      - elk-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:9200/_cluster/health?wait_for_status=yellow || exit 1"]
+      interval: 30s
+      timeout: 15s
+      retries: 5
+      start_period: 60s
+
+  logstash:
+    image: docker.elastic.co/logstash/logstash:8.11.1
+    container_name: logstash
+    environment:
+      - "LS_JAVA_OPTS=-Xmx4g -Xms4g"
+    volumes:
+      - ./logstash/config/logstash.yml:/usr/share/logstash/config/logstash.yml:ro
+      - ./logstash/config/pipelines.yml:/usr/share/logstash/config/pipelines.yml:ro
+      - ./logstash/pipeline:/usr/share/logstash/pipeline:ro
+      - ./logstash/patterns:/usr/share/logstash/patterns:ro
+      - ./logstash/templates:/usr/share/logstash/templates:ro
+      # --- 2. diskte kalıcı Logstash durumu (dead letter queue, queue) ---
+      - /data/logstash/data:/usr/share/logstash/data
+      - /data/logstash/logs:/var/log/logstash
+    ports:
+      - "5044:5044"   # Beats input (tüm Filebeat → router pipeline)
+      - "9600:9600"   # Logstash monitoring API
+    networks:
+      - elk-network
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:9600 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.11.1
+    container_name: kibana
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+      - SERVER_NAME=kibana
+      - SERVER_HOST=0.0.0.0
+    volumes:
+      - ./kibana/config/kibana.yml:/usr/share/kibana/config/kibana.yml:ro
+      # --- 2. diskte Kibana kalıcı veri (saved objects, sessions) ---
+      - /data/kibana/data:/usr/share/kibana/data
+    ports:
+      - "5601:5601"
+    networks:
+      - elk-network
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:5601/api/status || exit 1"]
+      interval: 30s
+      timeout: 15s
+      retries: 5
+      start_period: 90s
+
+  filebeat:
+    image: docker.elastic.co/beats/filebeat:8.11.1
+    container_name: filebeat
+    user: root
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+      - LOGSTASH_HOSTS=logstash:5044
+    volumes:
+      - ./filebeat/config/filebeat.yml:/usr/share/filebeat/filebeat.yml:ro
+      - ./filebeat/modules.d:/usr/share/filebeat/modules.d:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      # --- Exchange Server log dosyaları (Windows sunuculardan rsync/Samba ile /data'ya alınır) ---
+      - /data/exchange-logs/message-tracking:/exchange-logs/message-tracking:ro
+      - /data/exchange-logs/iis:/exchange-logs/iis:ro
+      - /data/exchange-logs/httpproxy:/exchange-logs/httpproxy:ro
+      - /data/exchange-logs/mapihttp:/exchange-logs/mapihttp:ro
+      - /data/exchange-logs/smtp-receive:/exchange-logs/smtp-receive:ro
+      - /data/exchange-logs/smtp-send:/exchange-logs/smtp-send:ro
+      # --- Filebeat registry (2. disk, restart'ta kaldığı yerden devam eder) ---
+      - /data/logstash/filebeat-registry:/usr/share/filebeat/data
+    networks:
+      - elk-network
+    depends_on:
+      logstash:
+        condition: service_healthy
+    restart: unless-stopped
+    command: filebeat -e -strict.perms=false
+
+# Named volume YOK - tüm veriler /data (2. disk) üzerindeki bind mount'larda
+networks:
+  elk-network:
+    driver: bridge

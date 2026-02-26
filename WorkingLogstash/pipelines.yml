@@ -1,0 +1,15 @@
+# This file is where you define your pipelines. You can define multiple.
+# For more information on multiple pipelines, see the documentation:
+#   https://www.elastic.co/guide/en/logstash/current/multiple-pipelines.html
+
+- pipeline.id: id1
+  path.config: "/etc/logstash/conf.d/logstashiis.conf"
+
+- pipeline.id: id2
+  path.config: "/etc/logstash/conf.d/logstash-http-protocol.conf"
+
+- pipeline.id: id3
+  path.config: "/etc/logstash/conf.d/logstashmtrk.conf"
+
+- pipeline.id: id4
+  path.config: "/etc/logstash/conf.d/logstashmtrkip.conf"

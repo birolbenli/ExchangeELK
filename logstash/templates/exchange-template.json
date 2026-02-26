@@ -1,0 +1,18 @@
+{
+  "_comment": "Bu dosya referans icin saklanmistir. Gercek template setup-ilm.sh ile uygulanir.",
+  "_comment2": "Elasticsearch 8.x'te component template + index template kullanilir.",
+  "index_patterns": [
+    "exchange-msgtrk-*",
+    "exchange-iis-*",
+    "exchange-httpproxy-*",
+    "exchange-mapihttp-*",
+    "exchange-smtp-receive-*",
+    "exchange-smtp-send-*"
+  ],
+  "priority": 200,
+  "composed_of": ["exchange-logs-settings", "exchange-logs-mappings"],
+  "_meta": {
+    "description": "Exchange Server logs - Hot/Warm/Cold/Delete - 90 gun retention",
+    "managed_by": "scripts/setup-ilm.sh"
+  }
+}

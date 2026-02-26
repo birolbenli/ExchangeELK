@@ -1,0 +1,52 @@
+# ================================================================
+# Logstash Multiple Pipelines Konfigürasyonu
+#
+# Mimari (Pipeline-to-Pipeline):
+#
+#  Filebeat (port 5044)
+#       ↓
+#  [exchange-router]  ← tüm loglar tek noktaya girer
+#       ↓ tag'e göre yönlendirir
+#  ┌─────────────────────────────────────────────────┐
+#  [msgtrk] [iis] [http-protocol] [smtp]
+# ================================================================
+
+# --- Giriş (Router) -------------------------------------------
+- pipeline.id: exchange-router
+  path.config: "/usr/share/logstash/pipeline/pipeline-router.conf"
+  pipeline.workers: 2
+  pipeline.batch.size: 1000
+  queue.type: persisted
+  dead_letter_queue.enable: true
+
+# --- Downstream: Message Tracking ------------------------------
+- pipeline.id: exchange-message-tracking
+  path.config: "/usr/share/logstash/pipeline/pipeline-message-tracking.conf"
+  pipeline.workers: 2
+  pipeline.batch.size: 500
+  queue.type: persisted
+  dead_letter_queue.enable: true
+
+# --- Downstream: IIS W3C Logs ----------------------------------
+- pipeline.id: exchange-iis
+  path.config: "/usr/share/logstash/pipeline/pipeline-iis.conf"
+  pipeline.workers: 2
+  pipeline.batch.size: 500
+  queue.type: persisted
+  dead_letter_queue.enable: true
+
+# --- Downstream: HTTP Protocol / MAPI --------------------------
+- pipeline.id: exchange-http-protocol
+  path.config: "/usr/share/logstash/pipeline/pipeline-http-protocol.conf"
+  pipeline.workers: 2
+  pipeline.batch.size: 500
+  queue.type: persisted
+  dead_letter_queue.enable: true
+
+# --- Downstream: SMTP Send / Receive ---------------------------
+- pipeline.id: exchange-smtp
+  path.config: "/usr/share/logstash/pipeline/pipeline-smtp.conf"
+  pipeline.workers: 1
+  pipeline.batch.size: 200
+  queue.type: persisted
+  dead_letter_queue.enable: true

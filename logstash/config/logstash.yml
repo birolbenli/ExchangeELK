@@ -1,0 +1,39 @@
+# ================================================================
+# Logstash Configuration - Exchange ELK Stack
+# Multiple pipeline kullanımı için path.config YOK;
+# pipeline yönetimi pipelines.yml ile yapılır.
+# ================================================================
+
+http.host: "0.0.0.0"
+
+# Veriler 2. diske yazılır (docker-compose bind mount: /data/logstash/data)
+path.data: /usr/share/logstash/data
+
+# ---- Pipeline genel ayarlar (pipelines.yml'de override edilebilir) ---
+pipeline.ordered: auto
+pipeline.workers: 2
+pipeline.batch.size: 500
+pipeline.batch.delay: 50
+
+# ---- Persistent Queue (PQ) ----------------------------------
+# PQ etkin - Logstash dursa bile log kaybı olmaz
+queue.type: persisted
+queue.max_bytes: 4gb
+queue.checkpoint.acks: 1024
+queue.checkpoint.writes: 1024
+
+# ---- Dead Letter Queue (DLQ) --------------------------------
+dead_letter_queue.enable: true
+dead_letter_queue.max_bytes: 1gb
+
+# ---- Config reload -----------------------------------------
+config.reload.automatic: true
+config.reload.interval: 60s
+
+# ---- Monitoring ---------------------------------------------
+xpack.monitoring.enabled: true
+xpack.monitoring.elasticsearch.hosts: ["http://elasticsearch:9200"]
+
+# ---- Log -------------------------------------------------
+log.level: warn
+log.format: json

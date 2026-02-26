@@ -1,0 +1,43 @@
+# ================================================================
+# Elasticsearch - Exchange ELK Stack (600 Mailbox, 90-gun retention)
+# Veriler sistem diskine yazılmaz; path.data /data'da (2. disk)
+# ================================================================
+
+cluster.name: "exchange-elk-cluster"
+node.name: "elasticsearch-node1"
+network.host: 0.0.0.0
+
+# Single-node cluster
+cluster.initial_master_nodes: ["elasticsearch-node1"]
+discovery.type: single-node
+
+# ---- Veri yolları (2. disk) ------------------------------------
+path.data: /usr/share/elasticsearch/data
+path.logs: /usr/share/elasticsearch/logs
+path.repo: ["/data/elasticsearch/backups"]
+
+# ---- Bellek -----------------------------------------------
+bootstrap.memory_lock: true
+indices.memory.index_buffer_size: 20%
+
+# ---- Circuit breaker (tek node için daha geniş limitler) ---
+indices.breaker.total.limit: 85%
+indices.breaker.request.limit: 50%
+indices.breaker.fielddata.limit: 30%
+
+# ---- Varsayılan index ayarları -----------------------------
+# index.codec: best_compression  → ILM warm fazında forcemerge ile uygulanır
+# Hot indeksler default (LZ4) - yazma hızı öncelikli
+
+# ---- Thread pool (8 CPU core için) -------------------------
+thread_pool.write.queue_size: 1000
+thread_pool.search.queue_size: 500
+
+# ---- ILM / Monitoring --------------------------------------
+xpack.security.enabled: false
+xpack.monitoring.collection.enabled: true
+xpack.ilm.enabled: true
+
+# ---- Logging -----------------------------------------------
+logger.org.elasticsearch.discovery: WARN
+logger.org.elasticsearch.deprecation: ERROR

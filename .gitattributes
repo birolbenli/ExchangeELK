@@ -1,0 +1,14 @@
+# Shell scripts: LF (Unix) satır sonu - Windows'ta CRLF'e dönüştürme
+*.sh        text eol=lf
+*.conf      text eol=lf
+*.yml       text eol=lf
+*.yaml      text eol=lf
+*.json      text eol=lf
+*.md        text eol=lf
+*.env       text eol=lf
+*.ps1       text eol=crlf
+*.psm1      text eol=crlf
+*.psd1      text eol=crlf
+*.bat       text eol=crlf
+*.options   text eol=lf
+*.properties text eol=lf

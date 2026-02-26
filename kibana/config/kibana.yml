@@ -1,0 +1,27 @@
+server.name: "kibana"
+server.host: "0.0.0.0"
+server.port: 5601
+
+elasticsearch.hosts: ["http://elasticsearch:9200"]
+elasticsearch.requestTimeout: 90000
+elasticsearch.shardTimeout: 30000
+
+# Monitoring
+monitoring.ui.container.elasticsearch.enabled: true
+
+# Logging
+logging.appenders.file.type: file
+logging.appenders.file.fileName: /var/log/kibana.log
+logging.appenders.file.layout.type: json
+logging.root.level: warn
+
+# Performance settings for 600 mailboxes
+elasticsearch.maxSockets: 1024
+elasticsearch.keepAlive: true
+
+# Index patterns
+kibana.defaultAppId: "dashboard"
+
+# Security (disabled for simplicity)
+xpack.security.enabled: false
+xpack.encryptedSavedObjects.encryptionKey: "exchange_elk_key_32_characters_long"

@@ -1,0 +1,178 @@
+# ================================================================
+# Filebeat Configuration - Exchange ELK Stack
+#
+# Tüm log türleri tek bir port'a gider, Logstash router pipeline
+# tag'e göre yönlendirir (Pipeline-to-Pipeline mimarisi).
+#
+#   Log Türü              Tag               Hedef (Logstash)
+#   ─────────────────     ──────────────    ─────────────────
+#   Message Tracking      MessageTracking   5044 → exchange-message-tracking
+#   IIS W3C               ExchangeIIS       5044 → exchange-iis
+#   HTTP Protocol         HttpProxy         5044 → exchange-http-protocol
+#   MAPI HTTP             MapiHttp          5044 → exchange-http-protocol
+#   SMTP Receive          SmtpReceive       5044 → exchange-smtp
+#   SMTP Send             SmtpSend          5044 → exchange-smtp
+#
+# Exchange Server'lardaki log dizinleri Ubuntu'ya şu yollardan
+# erişilir (Filebeat Windows ajanı doğrudan logları gönderir):
+#   /exchange-logs/message-tracking/  → %ExchangePath%\Logging\MessageTracking\
+#   /exchange-logs/httpproxy/         → %ExchangePath%\Logging\HttpProxy\*\
+#   /exchange-logs/mapihttp/          → %ExchangePath%\Logging\MapiHttp\Emsmdb\
+#   /exchange-logs/iis/               → C:\inetpub\logs\LogFiles\W3SVC*\
+#   /exchange-logs/smtp-receive/      → %ExchangePath%\Logging\ProtocolLog\SmtpReceive\
+#   /exchange-logs/smtp-send/         → %ExchangePath%\Logging\ProtocolLog\SmtpSend\
+# ================================================================
+
+filebeat.inputs:
+
+# ------------------------------------------------------------------
+# 1. Message Tracking → port 5044
+# ------------------------------------------------------------------
+- type: log
+  enabled: true
+  id: exchange-message-tracking
+  paths:
+    - /exchange-logs/message-tracking/*.log
+  tags: ["MessageTracking"]
+  fields_under_root: true
+  # Exchange CSV logları tek satır; multiline GEREKMİYOR
+  scan_frequency: 15s
+  close_inactive: 5m
+  harvester_buffer_size: 32768
+  max_bytes: 10485760
+  # #Fields / #Version başlıklarını Filebeat'te düşürme (Logstash'te atılacak)
+
+# ------------------------------------------------------------------
+# 2. IIS W3C logs → 5044 → exchange-iis pipeline
+#    X-Forwarded-For (OrgclientIP) aktif edilmiştir.
+# ------------------------------------------------------------------
+- type: log
+  enabled: true
+  id: exchange-iis
+  paths:
+    - /exchange-logs/iis/*.log
+    - /exchange-logs/iis/**/*.log
+  tags: ["ExchangeIIS"]
+  fields_under_root: true
+  scan_frequency: 15s
+  close_inactive: 5m
+  harvester_buffer_size: 32768
+  max_bytes: 10485760
+
+# ------------------------------------------------------------------
+# 3a. HttpProxy Protocol logs → 5044 → exchange-http-protocol pipeline
+# ------------------------------------------------------------------
+- type: log
+  enabled: true
+  id: exchange-httpproxy
+  paths:
+    - /exchange-logs/httpproxy/*.log
+    - /exchange-logs/httpproxy/**/*.log
+  tags: ["HttpProxy"]
+  fields_under_root: true
+  scan_frequency: 30s
+  close_inactive: 10m
+  harvester_buffer_size: 65536
+  max_bytes: 10485760
+
+# ------------------------------------------------------------------
+# 3b. MAPI HTTP logs → 5044 → exchange-http-protocol pipeline
+# ------------------------------------------------------------------
+- type: log
+  enabled: true
+  id: exchange-mapihttp
+  paths:
+    - /exchange-logs/mapihttp/*.log
+    - /exchange-logs/mapihttp/**/*.log
+  tags: ["MapiHttp"]
+  fields_under_root: true
+  scan_frequency: 30s
+  close_inactive: 10m
+  harvester_buffer_size: 65536
+  max_bytes: 10485760
+
+# ------------------------------------------------------------------
+# 4a. SMTP Receive logs → 5044 → exchange-smtp pipeline
+# ------------------------------------------------------------------
+- type: log
+  enabled: true
+  id: exchange-smtp-receive
+  paths:
+    - /exchange-logs/smtp-receive/*.log
+  tags: ["SmtpReceive"]
+  fields_under_root: true
+  scan_frequency: 15s
+  close_inactive: 5m
+  harvester_buffer_size: 32768
+
+# ------------------------------------------------------------------
+# 4b. SMTP Send logs → 5044 → exchange-smtp pipeline
+# ------------------------------------------------------------------
+- type: log
+  enabled: true
+  id: exchange-smtp-send
+  paths:
+    - /exchange-logs/smtp-send/*.log
+  tags: ["SmtpSend"]
+  fields_under_root: true
+  scan_frequency: 15s
+  close_inactive: 5m
+  harvester_buffer_size: 32768
+
+# ================================================================
+# Registry (2. disk - restart'ta kaldığı yerden devam eder)
+# ================================================================
+filebeat.registry.path: /usr/share/filebeat/data
+filebeat.shutdown_timeout: 60s
+
+# ================================================================
+# Processors
+# ================================================================
+processors:
+  - add_host_metadata:
+      when.not.contains.tags: forwarded
+  - drop_fields:
+      fields:
+        - "agent.ephemeral_id"
+        - "ecs"
+        - "input.type"
+        - "log.offset"
+        - "log.file.device_id"
+        - "log.file.inode"
+      ignore_missing: true
+
+# ================================================================
+# Outputs - Tüm loglar tek porta → Logstash router pipeline
+# Tag'e göre ayrım Logstash içinde pipeline-router.conf'ta yapılır.
+# ================================================================
+output.logstash:
+  hosts:
+    - "logstash:5044"   # Tek port, tüm log türleri
+
+# ================================================================
+# Monitoring
+# ================================================================
+monitoring.enabled: true
+monitoring.elasticsearch:
+  hosts: ["http://elasticsearch:9200"]
+
+# ================================================================
+# Logging
+# ================================================================
+logging.level: warning
+logging.to_files: true
+logging.files:
+  path: /var/log/filebeat
+  name: filebeat
+  keepfiles: 7
+  permissions: 0644
+
+# ================================================================
+# Config reload (yeni log dizini eklenirse otomatik algıla)
+# ================================================================
+filebeat.config:
+  inputs:
+    enabled: true
+    path: /usr/share/filebeat/inputs.d/*.yml
+    reload.enabled: true
+    reload.period: 60s
