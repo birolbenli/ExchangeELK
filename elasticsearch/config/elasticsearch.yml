@@ -7,8 +7,7 @@ cluster.name: "exchange-elk-cluster"
 node.name: "elasticsearch-node1"
 network.host: 0.0.0.0
 
-# Single-node cluster
-cluster.initial_master_nodes: ["elasticsearch-node1"]
+# Single-node cluster (initial_master_nodes + single-node birlikte kullanılamaz)
 discovery.type: single-node
 
 # ---- Veri yolları (2. disk) ------------------------------------
