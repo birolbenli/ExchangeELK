@@ -264,7 +264,11 @@ foreach (`$dir in `$LogDirs) {
 # Check Filebeat service status
 `$filebeatService = Get-Service -Name "filebeat" -ErrorAction SilentlyContinue
 if (`$filebeatService) {
-    Write-Host "Filebeat Service: `$(`$filebeatService.Status)" -ForegroundColor $( if (`$filebeatService.Status -eq "Running") { "Green" } else { "Red" })
+    if (`$filebeatService.Status -eq "Running") {
+        Write-Host "Filebeat Service: Running" -ForegroundColor Green
+    } else {
+        Write-Host "Filebeat Service: `$(`$filebeatService.Status)" -ForegroundColor Red
+    }
 }
 "@
 
