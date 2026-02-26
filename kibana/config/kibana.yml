@@ -17,7 +17,6 @@ logging.root.level: warn
 
 # Performance settings for 600 mailboxes
 elasticsearch.maxSockets: 1024
-elasticsearch.keepAlive: true
 
 # Index patterns
 kibana.defaultAppId: "dashboard"
