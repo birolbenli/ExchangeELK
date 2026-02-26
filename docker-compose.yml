@@ -1,5 +1,3 @@
-version: '3.8'
-
 # ================================================================
 # Tüm veriler sistem diskine değil 2. diske (/data) yazılır.
 # Disk kurulumu için önce scripts/setup-disk.sh çalıştırın.
