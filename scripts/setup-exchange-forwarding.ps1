@@ -31,14 +31,15 @@ if (!$ExchangePath) {
 
 Write-Host "Exchange Server found at: $ExchangePath" -ForegroundColor Green
 
-# Define log directories
+# Define log directories (Z: sürücüsüne taşınan loglar dahil)
 $LogDirectories = @{
-    "MessageTracking" = "$ExchangePath\Logging\MessageTracking"
-    "IIS" = "C:\inetpub\logs\LogFiles"
-    "SMTP" = "$ExchangePath\Logging\SmtpSend"
-    "Transport" = "$ExchangePath\Logging\TransportService"
-    "Connectivity" = "$ExchangePath\Logging\ConnectivityLogging"
-    "ProtocolLog" = "$ExchangePath\Logging\Imap4"
+    "MessageTracking" = "Z:\MessageTrackingLogs"
+    "IIS"             = "C:\inetpub\logs\LogFiles"
+    "HttpProxy"       = "$ExchangePath\Logging\HttpProxy"
+    "MapiHttp"        = "$ExchangePath\Logging\MapiHttp"
+    "SMTP Receive"    = "Z:\SmtpReceive"
+    "SMTP Send"       = "Z:\SmtpSend"
+    "Connectivity"    = "Z:\ConnectivityLogs"
 }
 
 # Function to create network share access
@@ -90,12 +91,12 @@ function Install-FilebeatAgent {
         $FilebeatConfig = @"
 filebeat.inputs:
 
-# Message Tracking Logs
+# Message Tracking Logs (Z: sürücüsü)
 - type: log
   enabled: true
   id: exchange-message-tracking
   paths:
-    - 'C:\Program Files\Microsoft\Exchange Server\V15\Logging\MessageTracking\*.log'
+    - 'Z:\MessageTrackingLogs\*.log'
   tags: ["MessageTracking"]
   fields_under_root: true
   scan_frequency: 15s
@@ -128,29 +129,29 @@ filebeat.inputs:
   enabled: true
   id: exchange-mapihttp
   paths:
-    - 'C:\Program Files\Microsoft\Exchange Server\V15\Logging\MapiHttp\Emsmdb\*.log'
+    - 'C:\Program Files\Microsoft\Exchange Server\V15\Logging\MapiHttp\*\*.log'
   tags: ["MapiHttp"]
   fields_under_root: true
   scan_frequency: 30s
   close_inactive: 10m
 
-# SMTP Receive Logs
+# SMTP Receive Logs (Z: sürücüsü)
 - type: log
   enabled: true
   id: exchange-smtp-receive
   paths:
-    - 'C:\Program Files\Microsoft\Exchange Server\V15\Logging\ProtocolLog\SmtpReceive\*.log'
+    - 'Z:\SmtpReceive\*.log'
   tags: ["SmtpReceive"]
   fields_under_root: true
   scan_frequency: 15s
   close_inactive: 5m
 
-# SMTP Send Logs
+# SMTP Send Logs (Z: sürücüsü)
 - type: log
   enabled: true
   id: exchange-smtp-send
   paths:
-    - 'C:\Program Files\Microsoft\Exchange Server\V15\Logging\ProtocolLog\SmtpSend\*.log'
+    - 'Z:\SmtpSend\*.log'
   tags: ["SmtpSend"]
   fields_under_root: true
   scan_frequency: 15s
