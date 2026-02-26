@@ -16,7 +16,7 @@ error() { echo -e "${RED}[ERROR]${NC} $*"; exit 1; }
 step()  { echo -e "\n${BLUE}>>> $*${NC}"; }
 
 # ---- Parametreler -------------------------------------------
-GITHUB_REPO="${1:-https://github.com/yourorg/ExchangeELK.git}"
+GITHUB_REPO="${1:-https://github.com/birolbenli/ExchangeELK.git}"
 DATA_DISK="${2:-/dev/sdb}"   # 2. disk (otomatik algilama yapilir)
 INSTALL_DIR="/opt/exchange-elk"
 

@@ -58,7 +58,7 @@ Toplam /data kullanımı             : ~211 GB
 
 ```bash
 # Repository'yi klonlayın
-git clone https://github.com/yourorg/ExchangeELK.git
+git clone https://github.com/birolbenli/ExchangeELK.git
 cd ExchangeELK
 chmod +x scripts/*.sh
 
@@ -68,7 +68,7 @@ sudo ./scripts/setup-disk.sh /dev/sdb
 
 # Ana deployment (Docker kurulumu + disk ayarı + ILM + Kibana)
 # Argüman 1: GitHub repo URL'si, Argüman 2: data disk (/dev/sdb varsayılan)
-sudo ./scripts/deploy.sh https://github.com/yourorg/ExchangeELK.git /dev/sdb
+sudo ./scripts/deploy.sh https://github.com/birolbenli/ExchangeELK.git /dev/sdb
 
 # ILM policy'yi yeniden uygulamak istersen (idempotent)
 sudo ./scripts/setup-ilm.sh
