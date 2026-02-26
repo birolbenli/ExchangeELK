@@ -91,11 +91,12 @@ function Install-FilebeatAgent {
         $FilebeatConfig = @"
 filebeat.inputs:
 
-# Message Tracking Logs (Z: sürücüsü)
+# Message Tracking Logs (Z: sürücüsü - .LOG uzantısı büyük harf)
 - type: log
   enabled: true
   id: exchange-message-tracking
   paths:
+    - 'Z:\MessageTrackingLogs\*.LOG'
     - 'Z:\MessageTrackingLogs\*.log'
   tags: ["MessageTracking"]
   fields_under_root: true
