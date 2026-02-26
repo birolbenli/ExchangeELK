@@ -44,8 +44,8 @@ services:
       test: ["CMD-SHELL", "curl -sf http://localhost:9200/_cluster/health?wait_for_status=yellow || exit 1"]
       interval: 30s
       timeout: 15s
-      retries: 5
-      start_period: 60s
+      retries: 10
+      start_period: 120s
 
   logstash:
     image: docker.elastic.co/logstash/logstash:8.11.1
