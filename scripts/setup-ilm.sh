@@ -167,7 +167,21 @@ curl -sf -X PUT "$ES/_component_template/exchange-logs-mappings" \
           "type": "text",
           "fields": { "keyword": { "type": "keyword", "ignore_above": 512 } }
         },
-        "tags":                { "type": "keyword" }
+        "tags":                { "type": "keyword" },
+        "geoip": {
+          "properties": {
+            "location":    { "type": "geo_point" },
+            "country_code2": { "type": "keyword" },
+            "country_name":  { "type": "keyword" },
+            "city_name":     { "type": "keyword" },
+            "region_name":   { "type": "keyword" },
+            "continent_code":{ "type": "keyword" },
+            "timezone":      { "type": "keyword" },
+            "ip":            { "type": "ip", "ignore_malformed": true },
+            "latitude":      { "type": "half_float" },
+            "longitude":     { "type": "half_float" }
+          }
+        }
       }
     }
   }
