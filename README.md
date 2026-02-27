@@ -1,4 +1,4 @@
-# Exchange Server DAG - ELK Stack Log Analiz Sistemi
+﻿# Exchange Server DAG - ELK Stack Log Analiz Sistemi
 
 600 mailbox kapasiteli Exchange Server DAG ortami icin log toplama, isleme ve gorsellestirme sistemi.
 ELK 8.11.1 -- Docker Compose -- Ubuntu 22.04 LTS
@@ -78,7 +78,20 @@ Her Exchange Server'da PowerShell (yonetici) ile:
 .\scripts\setup-exchange-forwarding.ps1 -ELKServerIP "10.11.12.19" -InstallFilebeatAgent
 ```
 
-Script sunlari yapar: Filebeat indir/kur, `filebeat.yml` yaz (`output.logstash.hosts`), servis olarak baslat.
+Script Filebeat'i indirir ve `filebeat.yml` dosyasini yazar. Ancak Windows servisi ayri adimda kurulur.
+Script bittikten sonra asagidaki komutu calistir:
+
+```powershell
+cd "C:\Program Files\Filebeat"
+PowerShell.exe -ExecutionPolicy UnRestricted -File .\install-service-filebeat.ps1
+Start-Service filebeat
+Get-Service filebeat   # Running gorulmeli
+```
+
+Baglanti testi:
+```powershell
+Test-NetConnection -ComputerName 10.11.12.19 -Port 5044
+```
 
 ### 4. Firewall
 
