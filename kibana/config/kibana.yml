@@ -1,6 +1,7 @@
 server.name: "kibana"
 server.host: "0.0.0.0"
 server.port: 5601
+server.maxPayload: 10485760
 
 elasticsearch.hosts: ["http://elasticsearch:9200"]
 elasticsearch.requestTimeout: 90000
