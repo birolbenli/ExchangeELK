@@ -95,34 +95,34 @@ sudo ufw allow 22      # SSH
 
 ```
 ExchangeELK/
-â”œâ”€â”€ docker-compose.yml                         Container orkestrasyon (bind mount -> /data)
-â”œâ”€â”€ .env                                        JVM heap, port, yol degiskenleri
-â”œâ”€â”€ elasticsearch/
-â”‚   â””â”€â”€ config/elasticsearch.yml              Cluster, path.data, security ayarlari
-â”œâ”€â”€ logstash/
-â”‚   â”œâ”€â”€ config/
-â”‚   â”‚   â”œâ”€â”€ logstash.yml                      Persistent Queue (4 GB) + DLQ (1 GB)
-â”‚   â”‚   â””â”€â”€ pipelines.yml                     5 pipeline tanimi (pipeline-to-pipeline)
-â”‚   â”œâ”€â”€ geoip/
-â”‚   â”‚   â””â”€â”€ GeoLite2-City.mmdb                MaxMind GeoIP (deploy sonrasi yukle, .gitignore)
-â”‚   â””â”€â”€ pipeline/
-â”‚       â”œâ”€â”€ pipeline-router.conf              Giris noktasi - port 5044, tag bazli yonlendirme
-â”‚       â”œâ”€â”€ pipeline-message-tracking.conf    MessageTracking CSV (30 sutun)
-â”‚       â”œâ”€â”€ pipeline-iis.conf                 IIS W3C + X-Forwarded-For + GeoIP
-â”‚       â”œâ”€â”€ pipeline-http-protocol.conf       HttpProxy (77 alan) + MapiHttp (47 alan)
-â”‚       â””â”€â”€ pipeline-smtp.conf                SMTP Receive + Send protokol loglari
-â”œâ”€â”€ kibana/config/kibana.yml
-â”œâ”€â”€ filebeat/config/filebeat.yml              Exchange sunuculara deploy edilen konfig
-â”œâ”€â”€ scripts/
-â”‚   â”œâ”€â”€ deploy.sh                             Ana deployment scripti
-â”‚   â”œâ”€â”€ setup-disk.sh                         2. disk partition ve /data mount
-â”‚   â”œâ”€â”€ setup-ilm.sh                          ILM policy + component template + SLM
-â”‚   â”œâ”€â”€ setup-exchange-forwarding.ps1         Exchange sunucu Filebeat kurulumu
-â”‚   â””â”€â”€ health-check.sh                        Servis saglik kontrolu
-â””â”€â”€ dashboards/
-    â”œâ”€â”€ exchange-main-dashboard.ndjson        Ana dashboard (18 panel)
-    â”œâ”€â”€ exchange-msgtrak-dashboard.ndjson     Message Tracking detay dashboard (16 obje)
-    â””â”€â”€ exchange-search-dashboard.ndjson      Mesaj arama dashboard (7 obje)
+|-- docker-compose.yml                       Container orkestrasyon (bind mount -> /data)
+|-- .env                                     JVM heap, port, yol degiskenleri
+|-- elasticsearch/
+|   +-- config/elasticsearch.yml            Cluster, path.data, security ayarlari
+|-- logstash/
+|   |-- config/
+|   |   |-- logstash.yml                   Persistent Queue (4 GB) + DLQ (1 GB)
+|   |   +-- pipelines.yml                  5 pipeline tanimi (pipeline-to-pipeline)
+|   |-- geoip/
+|   |   +-- GeoLite2-City.mmdb             MaxMind GeoIP (deploy sonrasi yukle, .gitignore)
+|   +-- pipeline/
+|       |-- pipeline-router.conf           Giris noktasi - port 5044, tag bazli yonlendirme
+|       |-- pipeline-message-tracking.conf MessageTracking CSV (30 sutun)
+|       |-- pipeline-iis.conf              IIS W3C + X-Forwarded-For + GeoIP
+|       |-- pipeline-http-protocol.conf    HttpProxy (77 alan) + MapiHttp (47 alan)
+|       +-- pipeline-smtp.conf             SMTP Receive + Send protokol loglari
+|-- kibana/config/kibana.yml
+|-- filebeat/config/filebeat.yml            Exchange sunuculara deploy edilen konfig
+|-- scripts/
+|   |-- deploy.sh                           Ana deployment scripti
+|   |-- setup-disk.sh                       2. disk partition ve /data mount
+|   |-- setup-ilm.sh                        ILM policy + component template + SLM
+|   |-- setup-exchange-forwarding.ps1       Exchange sunucu Filebeat kurulumu
+|   +-- health-check.sh                     Servis saglik kontrolu
++-- dashboards/
+    |-- exchange-main-dashboard.ndjson      Ana dashboard (18 panel)
+    |-- exchange-msgtrak-dashboard.ndjson   Message Tracking detay dashboard (16 obje)
+    +-- exchange-search-dashboard.ndjson    Mesaj arama dashboard (7 obje)
 ```
 
 ---
