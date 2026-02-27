@@ -181,7 +181,7 @@ logging.files:
         
         # Install as Windows service
         Set-Location $InstallPath
-        & .\filebeat.exe --path.config $InstallPath install
+        PowerShell.exe -ExecutionPolicy UnRestricted -File .\install-service-filebeat.ps1
         
         # Start service
         Start-Service filebeat
