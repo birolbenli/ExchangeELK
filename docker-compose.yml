@@ -58,6 +58,7 @@ services:
       - ./logstash/pipeline:/usr/share/logstash/pipeline:ro
       - ./logstash/patterns:/usr/share/logstash/patterns:ro
       - ./logstash/templates:/usr/share/logstash/templates:ro
+      - ./logstash/geoip:/usr/share/logstash/geoip:ro
       # --- 2. diskte kalıcı Logstash durumu (dead letter queue, queue) ---
       - /data/logstash/data:/usr/share/logstash/data
       - /data/logstash/logs:/var/log/logstash
