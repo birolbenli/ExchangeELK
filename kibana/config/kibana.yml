@@ -18,3 +18,7 @@ logging.root.level: warn
 # Security (disabled for simplicity)
 xpack.security.enabled: false
 xpack.encryptedSavedObjects.encryptionKey: "exchange_elk_key_32_characters_long"
+
+# Dark mode
+uiSettings.overrides:
+  theme:darkMode: true
