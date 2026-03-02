@@ -13,7 +13,8 @@ services:
       - discovery.type=single-node
       - bootstrap.memory_lock=true
       # 32 GB RAM için: ES JVM = RAM'in %50'si, max 32 GB; burada 16 GB
-      - "ES_JAVA_OPTS=-Xms16g -Xmx16g"
+      # G1GC ayarları .env dosyasından gelir
+      - "ES_JAVA_OPTS=${ES_JAVA_OPTS}"
       - xpack.security.enabled=false
       - xpack.security.enrollment.enabled=false
       - xpack.security.http.ssl.enabled=false
@@ -51,7 +52,7 @@ services:
     image: docker.elastic.co/logstash/logstash:8.11.1
     container_name: logstash
     environment:
-      - "LS_JAVA_OPTS=-Xmx4g -Xms4g"
+      - "LS_JAVA_OPTS=${LS_JAVA_OPTS}"
     volumes:
       - ./logstash/config/logstash.yml:/usr/share/logstash/config/logstash.yml:ro
       - ./logstash/config/pipelines.yml:/usr/share/logstash/config/pipelines.yml:ro
