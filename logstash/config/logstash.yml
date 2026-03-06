@@ -4,7 +4,7 @@
 # pipeline yönetimi pipelines.yml ile yapılır.
 # ================================================================
 
-http.host: "0.0.0.0"
+api.http.host: "0.0.0.0"
 
 # Veriler 2. diske yazılır (docker-compose bind mount: /data/logstash/data)
 path.data: /usr/share/logstash/data
@@ -30,9 +30,8 @@ dead_letter_queue.max_bytes: 1gb
 config.reload.automatic: true
 config.reload.interval: 60s
 
-# ---- Monitoring ---------------------------------------------
-xpack.monitoring.enabled: true
-xpack.monitoring.elasticsearch.hosts: ["http://elasticsearch:9200"]
+# ---- Monitoring (Logstash 9'da xpack.monitoring kaldirildi; Elastic Agent kullanin) ---
+# xpack.monitoring.enabled: true  → artik gecersiz
 
 # ---- Log -------------------------------------------------
 log.level: warn
