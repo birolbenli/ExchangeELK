@@ -66,8 +66,7 @@ curl -sf -X PUT "$ES/_ilm/policy/exchange-logs-policy" \
         "actions": {
           "set_priority": { "priority": 0 },
           "readonly": {},
-          "allocate": { "number_of_replicas": 0 },
-          "freeze": {}
+          "allocate": { "number_of_replicas": 0 }
         }
       },
       "delete": {

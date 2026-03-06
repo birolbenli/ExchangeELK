@@ -34,7 +34,7 @@ thread_pool.search.queue_size: 500
 
 # ---- ILM / Monitoring --------------------------------------
 xpack.security.enabled: false
-xpack.monitoring.collection.enabled: true
+# xpack.monitoring.collection.enabled kaldırıldı (ES 9'da yok; Elastic Agent kullanın)
 
 # ---- Logging -----------------------------------------------
 logger.org.elasticsearch.discovery: WARN
