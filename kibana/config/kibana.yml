@@ -16,8 +16,7 @@ logging.appenders.file.fileName: /var/log/kibana.log
 logging.appenders.file.layout.type: json
 logging.root.level: warn
 
-# Security (disabled for simplicity)
-xpack.security.enabled: false
+# Security (Kibana 9'da xpack.security.enabled kaldirildi; ES security=false ise auth otomatik devre disi)
 xpack.encryptedSavedObjects.encryptionKey: "exchange_elk_key_32_characters_long"
 
 # Dark mode
