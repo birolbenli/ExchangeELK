@@ -8,35 +8,46 @@ ELK 8.11.1 -- Docker Compose -- Ubuntu 22.04 LTS
 
 ```
 Exchange Servers (Windows) - DAG ortami, 600 mailbox
-    |-- Message Tracking Logs   (tag: ExchangeMsgTrack)
+    |-- Message Tracking Logs   (tag: MessageTracking)
     |-- IIS W3C Logs            (tag: ExchangeIIS)
     |-- HttpProxy Protocol Logs (tag: HttpProxy)
     |-- MapiHttp Protocol Logs  (tag: MapiHttp)
     |-- SMTP Receive Logs       (tag: SmtpReceive)
     |-- SMTP Send Logs          (tag: SmtpSend)
               |
-              v  Filebeat Agent (Windows, port 5044, TLS opsiyonel)
+              v  Filebeat Agent (Windows, port 5044)
+              |
+FortiMail Cihazi
+    |-- History Logs  (posta trafik)
+    |-- Spam Logs
+    |-- Virus Logs
+    |-- Event Logs
+              |
+              v  Syslog UDP/TCP (port 5514, dogrudan Logstash'e)
               |
     +--------------------------------------------------+
     |  Ubuntu ELK Server  10.11.12.19                  |
     |  Sistem: 100 GB SSD (OS + Docker images)         |
     |  Veri:   2 TB SSD  -> /data                      |
     |                                                   |
-    |  +--------------------+                          |
-    |  |   Logstash :5044   | <- Filebeat girisi        |
-    |  |   5 Pipeline (P2P) |    Persistent Queue 4 GB  |
-    |  |   DLQ: 1 GB        |    Dead Letter Queue       |
-    |  +-------+------------+                          |
+    |  +--------------------+  +--------------------+  |
+    |  |   Logstash :5044   |  |   Logstash :5514   |  |
+    |  |   5 Pipeline (P2P) |  |   FortiMail Syslog |  |
+    |  |   Exchange Logs    |  |   UDP + TCP        |  |
+    |  +-------+------------+  +-------+------------+  |
+    |          |                        |               |
+    |          v (pipeline-to-pipeline) v               |
+    |  +----------------------------------------------+ |
+    |  |          Elasticsearch:9200                   | |
+    |  |  exchange-msgtrk-*  exchange-iis-*            | |
+    |  |  exchange-smtp-*    fortimail-history-*        | |
+    |  |  fortimail-spam-*   fortimail-virus-*          | |
+    |  |  ILM: hot->warm->cold->delete                 | |
+    |  +----------------------------------------------+ |
     |          |                                        |
-    |          v (pipeline-to-pipeline)                 |
     |  +-------+------------+                          |
-    |  | Elasticsearch:9200 | 6 index grubu            |
-    |  | Single-node        | ILM: hot->warm->cold->del |
-    |  | /data/elasticsearch|                           |
-    |  +-------+------------+                          |
-    |          |                                        |
-    |  +-------+------------+                          |
-    |  |   Kibana :5601     | 3 dashboard              |
+    |  |   Kibana :5601     | 4 dashboard              |
+    |  |  Exchange + FortiMail dashboards              |
     |  +--------------------+                          |
     +--------------------------------------------------+
 ```

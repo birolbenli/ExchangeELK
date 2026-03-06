@@ -64,8 +64,10 @@ services:
       - /data/logstash/data:/usr/share/logstash/data
       - /data/logstash/logs:/var/log/logstash
     ports:
-      - "5044:5044"   # Beats input (tüm Filebeat → router pipeline)
-      - "9600:9600"   # Logstash monitoring API
+      - "5044:5044"         # Beats input (tüm Filebeat → router pipeline)
+      - "5514:5514/udp"     # FortiMail syslog UDP
+      - "5514:5514/tcp"     # FortiMail syslog TCP
+      - "9600:9600"         # Logstash monitoring API
     networks:
       - elk-network
     depends_on:

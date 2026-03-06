@@ -1,6 +1,6 @@
 ﻿# Exchange Server DAG - ELK Stack Log Analiz Sistemi
 
-600 mailbox kapasiteli Exchange Server DAG ortami icin log toplama, isleme ve gorsellestirme sistemi.
+600 mailbox kapasiteli Exchange Server DAG ortami ve FortiMail posta gateway icin log toplama, isleme ve gorsellestirme sistemi.
 ELK 8.11.1 -- Docker Compose -- Ubuntu 22.04 LTS
 
 ---
@@ -24,7 +24,8 @@ Gunluk ham log uretimi:
   Message Tracking : ~2 GB/gun
   IIS Logs         : ~1 GB/gun
   SMTP Logs        : ~500 MB/gun
-  Toplam ham       : ~3.5 GB/gun
+  FortiMail Syslog : ~300 MB/gun
+  Toplam ham       : ~3.8 GB/gun
 
 90 gunluk ham veri: ~315 GB
 
@@ -98,9 +99,36 @@ Test-NetConnection -ComputerName 10.11.12.19 -Port 5044
 ```bash
 sudo ufw allow 5601    # Kibana
 sudo ufw allow 9200    # Elasticsearch API
-sudo ufw allow 5044    # Logstash Beats input
+sudo ufw allow 5044    # Logstash Beats input (Exchange Filebeat)
+sudo ufw allow 5514    # Logstash Syslog input (FortiMail)
 sudo ufw allow 22      # SSH
 ```
+
+---
+
+## FortiMail Entegrasyonu
+
+FortiMail, syslog'ları doğrudan Logstash port **5514**'e (UDP veya TCP) gönderir.
+Filebeat gerektirmez — FortiMail cihazı üzerinde syslog ayarı yeterlidir.
+
+### FortiMail Web GUI (özet adımlar)
+
+1. **Log & Report → Log Setting → Remote → New**
+2. IP: ELK sunucu IP, Port: `5514`, Protocol: `UDP`, Level: `Information`
+3. Log Types: **History, Event, Spam, Virus** — tümünü etkinleştirin
+4. Apply ile kaydedin
+
+Detaylı kurulum: [docs/FORTIMAIL-SETUP.md](docs/FORTIMAIL-SETUP.md)
+
+### FortiMail Index'leri
+
+| Index Pattern | İçerik |
+|--------------|--------|
+| `fortimail-history-*` | Posta trafik logları (gelen/giden) |
+| `fortimail-spam-*` | Spam/antispam logları |
+| `fortimail-virus-*` | Antivirus tarama logları |
+| `fortimail-event-*` | Sistem olayları |
+| `fortimail-other-*` | Diğer log türleri |
 
 ---
 
@@ -123,9 +151,18 @@ ExchangeELK/
 |       |-- pipeline-message-tracking.conf MessageTracking CSV (30 sutun)
 |       |-- pipeline-iis.conf              IIS W3C + X-Forwarded-For + GeoIP
 |       |-- pipeline-http-protocol.conf    HttpProxy (77 alan) + MapiHttp (47 alan)
-|       +-- pipeline-smtp.conf             SMTP Receive + Send protokol loglari
+|       |-- pipeline-smtp.conf             SMTP Receive + Send protokol loglari
+|       +-- pipeline-fortimail.conf        FortiMail syslog UDP/TCP:5514, KV parse + GeoIP
 |-- kibana/config/kibana.yml
 |-- filebeat/config/filebeat.yml            Exchange sunuculara deploy edilen konfig
+|-- dashboards/
+|   |-- exchange-main-dashboard.ndjson
+|   |-- exchange-msgtrak-dashboard.ndjson
+|   |-- exchange-search-dashboard.ndjson
+|   +-- fortimail-dashboard.ndjson          FortiMail ana dashboard + arama + saved searches
+|-- docs/
+|   |-- ARCHITECTURE.md
+|   +-- FORTIMAIL-SETUP.md                  FortiMail kurulum ve entegrasyon rehberi
 |-- scripts/
 |   |-- deploy.sh                           Ana deployment scripti
 |   |-- setup-disk.sh                       2. disk partition ve /data mount
@@ -195,6 +232,17 @@ ExchangeELK/
 - Filtre bari: Gonderen, Alici, Konu, Message ID dropdown secimi
 - Metrik satiri: Toplam Kayit, Basarili Iletim (DELIVER+SENDEXTERNAL), Hata (DROP/FAIL/BADMAIL), Benzersiz Gonderici
 - Sonuc tablosu: timestamp, gonderen, alici, konu, event-id, event-id-tr, mesaj boyutu, kaynak
+
+### FortiMail - Ana Dashboard (`fortimail-dashboard.ndjson`)
+20 obje. FortiMail posta gateway log analizi.
+
+- **Metrikler**: Toplam kayit, Gelen posta, Engellenen, Spam/Bulk, Virus tespit
+- **Arama Filtreleri**: Gonderen, Alici, Konu, Eylem (Action), Siniflandirici, Kaynak IP — interaktif
+- **Trafik Zaman Serisi**: Gelen / Giden / Engellenen / Spam zaman serisi
+- **Pasta Grafikler**: Eylem dagilimi, Yon (Inbound/Outbound), Siniflandirici, Log turu
+- **Tablolar**: Top senderlar, Top alicilar, En cok engellenen IP + ulke, En cok spam domain, Virus listesi, Policy bazli trafik
+- **Cografi Harita**: Kaynak IP GeoIP dagilimi
+- **Saved Searches**: Posta Arama, Engellenen Mesajlar, Spam Loglar
 
 **event-id Turkce karsiliklari** (scripted field `event-id-tr`):
 
