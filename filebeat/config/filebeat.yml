@@ -28,25 +28,23 @@ filebeat.inputs:
 # ------------------------------------------------------------------
 # 1. Message Tracking → port 5044
 # ------------------------------------------------------------------
-- type: log
+- type: filestream
   enabled: true
   id: exchange-message-tracking
   paths:
     - /exchange-logs/message-tracking/*.log
   tags: ["MessageTracking"]
   fields_under_root: true
-  # Exchange CSV logları tek satır; multiline GEREKMİYOR
-  scan_frequency: 15s
-  close_inactive: 5m
-  harvester_buffer_size: 32768
-  max_bytes: 10485760
+  prospector.scanner.check_interval: 15s
+  close.on_state_change.inactive: 5m
+  buffer_size: 32768
   # #Fields / #Version başlıklarını Filebeat'te düşürme (Logstash'te atılacak)
 
 # ------------------------------------------------------------------
 # 2. IIS W3C logs → 5044 → exchange-iis pipeline
 #    X-Forwarded-For (OrgclientIP) aktif edilmiştir.
 # ------------------------------------------------------------------
-- type: log
+- type: filestream
   enabled: true
   id: exchange-iis
   paths:
@@ -54,15 +52,14 @@ filebeat.inputs:
     - /exchange-logs/iis/**/*.log
   tags: ["ExchangeIIS"]
   fields_under_root: true
-  scan_frequency: 15s
-  close_inactive: 5m
-  harvester_buffer_size: 32768
-  max_bytes: 10485760
+  prospector.scanner.check_interval: 15s
+  close.on_state_change.inactive: 5m
+  buffer_size: 32768
 
 # ------------------------------------------------------------------
 # 3a. HttpProxy Protocol logs → 5044 → exchange-http-protocol pipeline
 # ------------------------------------------------------------------
-- type: log
+- type: filestream
   enabled: true
   id: exchange-httpproxy
   paths:
@@ -70,15 +67,14 @@ filebeat.inputs:
     - /exchange-logs/httpproxy/**/*.log
   tags: ["HttpProxy"]
   fields_under_root: true
-  scan_frequency: 30s
-  close_inactive: 10m
-  harvester_buffer_size: 65536
-  max_bytes: 10485760
+  prospector.scanner.check_interval: 30s
+  close.on_state_change.inactive: 10m
+  buffer_size: 65536
 
 # ------------------------------------------------------------------
 # 3b. MAPI HTTP logs → 5044 → exchange-http-protocol pipeline
 # ------------------------------------------------------------------
-- type: log
+- type: filestream
   enabled: true
   id: exchange-mapihttp
   paths:
@@ -86,38 +82,37 @@ filebeat.inputs:
     - /exchange-logs/mapihttp/**/*.log
   tags: ["MapiHttp"]
   fields_under_root: true
-  scan_frequency: 30s
-  close_inactive: 10m
-  harvester_buffer_size: 65536
-  max_bytes: 10485760
+  prospector.scanner.check_interval: 30s
+  close.on_state_change.inactive: 10m
+  buffer_size: 65536
 
 # ------------------------------------------------------------------
 # 4a. SMTP Receive logs → 5044 → exchange-smtp pipeline
 # ------------------------------------------------------------------
-- type: log
+- type: filestream
   enabled: true
   id: exchange-smtp-receive
   paths:
     - /exchange-logs/smtp-receive/*.log
   tags: ["SmtpReceive"]
   fields_under_root: true
-  scan_frequency: 15s
-  close_inactive: 5m
-  harvester_buffer_size: 32768
+  prospector.scanner.check_interval: 15s
+  close.on_state_change.inactive: 5m
+  buffer_size: 32768
 
 # ------------------------------------------------------------------
 # 4b. SMTP Send logs → 5044 → exchange-smtp pipeline
 # ------------------------------------------------------------------
-- type: log
+- type: filestream
   enabled: true
   id: exchange-smtp-send
   paths:
     - /exchange-logs/smtp-send/*.log
   tags: ["SmtpSend"]
   fields_under_root: true
-  scan_frequency: 15s
-  close_inactive: 5m
-  harvester_buffer_size: 32768
+  prospector.scanner.check_interval: 15s
+  close.on_state_change.inactive: 5m
+  buffer_size: 32768
 
 # ================================================================
 # Registry (2. disk - restart'ta kaldığı yerden devam eder)
