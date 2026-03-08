@@ -155,6 +155,8 @@ output.logstash:
 monitoring.enabled: true
 monitoring.elasticsearch:
   hosts: ["http://elasticsearch:9200"]
+  username: "elastic"
+  password: "${ELASTICSEARCH_PASSWORD}"
 
 # ================================================================
 # Logging

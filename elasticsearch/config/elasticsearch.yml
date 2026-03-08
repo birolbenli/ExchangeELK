@@ -33,7 +33,9 @@ thread_pool.write.queue_size: 1000
 thread_pool.search.queue_size: 500
 
 # ---- ILM / Monitoring --------------------------------------
-xpack.security.enabled: false
+xpack.security.enabled: true
+xpack.security.http.ssl.enabled: false
+xpack.security.transport.ssl.enabled: false
 # xpack.monitoring.collection.enabled kaldırıldı (ES 9'da yok; Elastic Agent kullanın)
 
 # ---- Logging -----------------------------------------------

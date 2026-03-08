@@ -15,10 +15,11 @@ services:
       # 32 GB RAM için: ES JVM = RAM'in %50'si, max 32 GB; burada 16 GB
       # G1GC ayarları .env dosyasından gelir
       - "ES_JAVA_OPTS=${ES_JAVA_OPTS}"
-      - xpack.security.enabled=false
+      - xpack.security.enabled=true
       - xpack.security.enrollment.enabled=false
       - xpack.security.http.ssl.enabled=false
       - xpack.security.transport.ssl.enabled=false
+      - ELASTIC_PASSWORD=${ELASTIC_PASSWORD}
       # ILM/snapshot için snapshot repo tanımla
       - path.repo=/data/elasticsearch/backups
     ulimits:
@@ -86,6 +87,8 @@ services:
     container_name: kibana
     environment:
       - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+      - ELASTICSEARCH_USERNAME=kibana_system
+      - ELASTICSEARCH_PASSWORD=${KIBANA_SYSTEM_PASSWORD}
       - SERVER_NAME=kibana
       - SERVER_HOST=0.0.0.0
     volumes:
@@ -113,6 +116,8 @@ services:
     user: root
     environment:
       - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+      - ELASTICSEARCH_USERNAME=elastic
+      - ELASTICSEARCH_PASSWORD=${ELASTIC_PASSWORD}
       - LOGSTASH_HOSTS=logstash:5044
     volumes:
       - ./filebeat/config/filebeat.yml:/usr/share/filebeat/filebeat.yml:ro

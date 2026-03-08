@@ -4,6 +4,8 @@ server.port: 5601
 server.maxPayload: 10485760
 
 elasticsearch.hosts: ["http://elasticsearch:9200"]
+elasticsearch.username: "kibana_system"
+elasticsearch.password: "${KIBANA_SYSTEM_PASSWORD}"
 elasticsearch.requestTimeout: 90000
 elasticsearch.shardTimeout: 30000
 
