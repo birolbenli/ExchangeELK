@@ -138,7 +138,7 @@ services:
       logstash:
         condition: service_healthy
     restart: unless-stopped
-    command: filebeat -e -strict.perms=false
+    command: filebeat -e --strict.perms=false
 
 # Named volume YOK - tüm veriler /data (2. disk) üzerindeki bind mount'larda
 networks:
