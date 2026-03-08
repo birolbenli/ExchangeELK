@@ -21,6 +21,8 @@ xpack.security.encryptionKey: "exchange_elk_security_key_32chars!"
 xpack.reporting.encryptionKey: "exchange_elk_reporting_key_32char"
 xpack.encryptedSavedObjects.encryptionKey: "exchange_elk_key_32_characters_long"
 
+xpack.fleet.enabled: false
+
 # Dark mode
 uiSettings.overrides:
   theme:darkMode: true
