@@ -6,7 +6,8 @@
 *.swo
 *~
 
-# Environment files
+# Environment files - parolalar icin .env.example kullanin
+.env
 .env.local
 .env.*.local
 
