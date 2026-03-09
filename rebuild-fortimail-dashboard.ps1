@@ -331,6 +331,8 @@ $dashboard = [ordered]@{
 }
 $lines += To-Line $dashboard
 
-# ---- Dosyaya yaz ------------------------------------------------
-$lines | Set-Content -Path $outFile -Encoding UTF8
-Write-Host "Done: $outFile ($($lines.Count) satir)"
+# ---- Dosyaya yaz (BOM olmadan) ----------------------------------
+$utf8NoBom = New-Object System.Text.UTF8Encoding $false
+$absPath = Join-Path (Get-Location) $outFile
+[System.IO.File]::WriteAllLines($absPath, $lines, $utf8NoBom)
+Write-Host "Done: $outFile ($($lines.Count) satir, BOM yok)"
