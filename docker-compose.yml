@@ -54,6 +54,7 @@ services:
     container_name: logstash
     environment:
       - "LS_JAVA_OPTS=${LS_JAVA_OPTS}"
+      - "ELASTIC_PASSWORD=${ELASTIC_PASSWORD}"
     volumes:
       - ./logstash/config/logstash.yml:/usr/share/logstash/config/logstash.yml:ro
       - ./logstash/config/pipelines.yml:/usr/share/logstash/config/pipelines.yml:ro
