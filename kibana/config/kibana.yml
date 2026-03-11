@@ -23,6 +23,18 @@ xpack.security.encryptionKey: "exchange_elk_security_key_32chars!"
 xpack.reporting.encryptionKey: "exchange_elk_reporting_key_32char"
 xpack.encryptedSavedObjects.encryptionKey: "exchange_elk_key_32_characters_long"
 
+# ---- SAML / Entra ID SSO -----------------------------------
+xpack.security.authc.providers:
+  saml.saml1:
+    order: 0
+    realm: saml1
+    description: "Microsoft Entra ID ile Giriş"
+  basic.basic1:
+    order: 1
+    description: "Kibana hesabı ile giriş"
+
+xpack.security.loginAssistanceMessage: "Entra ID (kurumsal) hesabınızla oturum açabilirsiniz."
+
 # Fleet (Elastic Agent yonetimi) - security=false ortaminda popup cikar, kapat gec
 # xpack.fleet.enabled: false
 
