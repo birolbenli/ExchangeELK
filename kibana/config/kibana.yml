@@ -27,17 +27,6 @@ xpack.encryptedSavedObjects.encryptionKey: "exchange_elk_key_32_characters_long"
 # xpack.fleet.enabled: false
 
 # ---- E-posta Bildirimleri (Amazon SES) ---------------------
+# Connector API ile kurulur: bash scripts/setup-email-connector.sh
 xpack.actions.allowedHosts: ["email-smtp.eu-west-1.amazonaws.com"]
-xpack.actions.preconfigured:
-  ses-alert-email:
-    name: "SES Mail Bildirimi"
-    actionTypeId: .email
-    config:
-      from: "mailtrace@alert.btcturk.com"
-      host: "email-smtp.eu-west-1.amazonaws.com"
-      port: 587
-      secure: false
-    secrets:
-      user: "AKIA2PEHDDHP22M2Y4UF"
-      password: "BJl9w2Q/gIAxY0VxkjySLb6Ksfxu0AKpXGomYdFW44My"
 
