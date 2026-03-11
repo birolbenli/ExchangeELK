@@ -88,62 +88,48 @@ create_user_and_notify() {
   fi
 
   # HTML mail içeriği
-  HTML_BODY="<html><body style='font-family:Arial,sans-serif;color:#222;max-width:600px;margin:0 auto'>
-<div style='background:#1a1a2e;padding:24px 32px;border-radius:8px 8px 0 0'>
-  <h2 style='color:#fff;margin:0'>BtcTurk</h2>
-  <p style='color:#aaa;margin:4px 0 0'>FortiMail Güvenlik İzleme Portalı</p>
-</div>
-<div style='border:1px solid #e0e0e0;border-top:none;padding:32px;border-radius:0 0 8px 8px'>
-  <p>Merhaba <strong>${FULLNAME}</strong>,</p>
-  <p>FortiMail Güvenlik İzleme Portalı'na erişim bilgileriniz aşağıda yer almaktadır.</p>
+  MAIL_TEXT="Merhaba ${FULLNAME},
 
-  <table style='width:100%;background:#f5f7ff;border-radius:8px;padding:20px;border-collapse:collapse;margin:24px 0'>
-    <tr><td style='padding:8px 16px;color:#666;width:120px'>URL</td>
-        <td style='padding:8px 16px'><a href='${KIBANA_PUBLIC_URL}' style='color:#4a6cf7;font-weight:bold'>${KIBANA_PUBLIC_URL}</a></td></tr>
-    <tr><td style='padding:8px 16px;color:#666'>Kullanıcı</td>
-        <td style='padding:8px 16px'><strong>${USERNAME}</strong></td></tr>
-    <tr><td style='padding:8px 16px;color:#666'>Şifre</td>
-        <td style='padding:8px 16px'><code style='background:#e8ecff;padding:4px 10px;border-radius:4px;letter-spacing:1px'>${PASSWORD}</code></td></tr>
-  </table>
+BtcTurk FortiMail Guvenlik Izleme Portali'na erisim bilgileriniz asagida yer almaktadir.
 
-  <h3 style='color:#1a1a2e;border-bottom:2px solid #4a6cf7;padding-bottom:8px'>Bu portal ne işe yarar?</h3>
-  <p>FortiMail E-posta Güvenlik Kapısı üzerinden geçen tüm e-posta trafiğini gerçek zamanlı olarak izlemenizi ve analiz etmenizi sağlar.</p>
+========================================
+GIRIS BILGILERINIZ
+========================================
+URL       : ${KIBANA_PUBLIC_URL}
+Kullanici : ${USERNAME}
+Sifre     : ${PASSWORD}
+========================================
 
-  <h4 style='color:#4a6cf7;margin-bottom:6px'>📊 E-posta Güvenlik Paneli</h4>
-  <ul style='margin:0 0 16px;padding-left:20px;line-height:1.8'>
-    <li>Son 24 saat / 7 gün / 30 günlük spam, virüs ve auth hatası istatistikleri</li>
-    <li>Saatlik trafik grafiği ve tehdit dağılımı</li>
-    <li>En çok spam gelen domainler ve IP adresleri</li>
-  </ul>
+BU PORTAL NE ISE YARAR?
+------------------------
+FortiMail E-posta Guvenlik Kapisi uzerinden gecen tum e-posta
+trafikini gercek zamanli olarak izlemenizi ve analiz etmenizi saglar.
 
-  <h4 style='color:#4a6cf7;margin-bottom:6px'>🔍 Mesaj Arama Merkezi</h4>
-  <ul style='margin:0 0 16px;padding-left:20px;line-height:1.8'>
-    <li>Gönderen/alıcı adresine, konuya veya tarih aralığına göre mail arama</li>
-    <li>Mailin spam/virüs olarak işaretlenip işaretlenmediğini görme</li>
-    <li>DKIM, DMARC, SPF kontrol sonuçlarını inceleme</li>
-    <li>Teslim durumu takibi (kabul, red, erteleme)</li>
-  </ul>
+[1] E-posta Guvenlik Paneli
+    - Son 24 saat / 7 gun / 30 gunluk spam, virus ve auth hatasi istatistikleri
+    - Saatlik trafik grafigi ve tehdit dagilimi
+    - En cok spam gelen domainler ve IP adresleri
 
-  <h4 style='color:#4a6cf7;margin-bottom:6px'>📈 Log Araştırma Merkezi</h4>
-  <ul style='margin:0 0 16px;padding-left:20px;line-height:1.8'>
-    <li>Ham log verilerine filtreli erişim</li>
-    <li>Belirli IP veya domain üzerinde detaylı analiz</li>
-    <li>Zaman bazlı trend grafiklerini inceleme</li>
-  </ul>
+[2] Mesaj Arama Merkezi
+    - Gonderen/alici adresine, konuya veya tarih araligina gore mail arama
+    - Mailin spam/virus olarak isaretlenip isaretlenmedigini gorme
+    - DKIM, DMARC, SPF kontrol sonuclarini inceleme
+    - Teslim durumu takibi (kabul, red, erteleme)
 
-  <div style='background:#fff8e1;border-left:4px solid #ffc107;padding:16px;border-radius:4px;margin-top:24px'>
-    <strong>⚠️ Önemli bilgiler:</strong>
-    <ul style='margin:8px 0 0;padding-left:20px;line-height:1.8'>
-      <li>Hesabınız <strong>salt okunur</strong> yetkiye sahiptir (görüntüleme only)</li>
-      <li>Şifrenizi ilk girişin ardından değiştirmeniz önerilir</li>
-      <li>Şifrenizi kimseyle paylaşmayınız</li>
-      <li>Teknik destek için IT ekibiyle iletişime geçiniz</li>
-    </ul>
-  </div>
+[3] Log Arastirma Merkezi
+    - Ham log verilerine filtreli erisim
+    - Belirli IP veya domain uzerinde detayli analiz
+    - Zaman bazli trend grafiklerini inceleme
 
-  <p style='margin-top:32px;color:#888;font-size:13px'>İyi çalışmalar,<br><strong>BtcTurk Sistem &amp; Altyapı Ekibi</strong></p>
-</div>
-</body></html>"
+ONEMLI BILGILER
+---------------
+- Hesabiniz salt okunur yetkiye sahiptir (goruntulemek only)
+- Sifrenizi ilk giristin ardindan degistirmeniz onerilir
+- Sifrenizi kimseyle paylasmayin
+- Teknik destek icin IT ekibiyle iletisime gecin
+
+Iyi calismalar,
+BtcTurk Sistem & Altyapi Ekibi"
 
   SEND_RESULT=$(curl -s -u "elastic:${ELASTIC_PASS}" -X POST \
     "${KIBANA_URL}/api/actions/connector/${CONNECTOR_ID}/_execute" \
@@ -152,9 +138,8 @@ create_user_and_notify() {
     -d "{
       \"params\": {
         \"to\": [\"${EMAIL}\"],
-        \"subject\": \"[BtcTurk] FortiMail İzleme Portalı - Erişim Bilgileriniz\",
-        \"message\": \"Lütfen HTML destekli bir e-posta istemcisi kullanın.\",
-        \"messageHTML\": $(echo "$HTML_BODY" | python3 -c 'import sys,json; print(json.dumps(sys.stdin.read()))')
+        \"subject\": \"[BtcTurk] FortiMail Izleme Portali - Erisim Bilgileriniz\",
+        \"message\": $(echo "$MAIL_TEXT" | python3 -c 'import sys,json; print(json.dumps(sys.stdin.read()))')
       }
     }")
 
