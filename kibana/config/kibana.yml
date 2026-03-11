@@ -26,6 +26,3 @@ xpack.encryptedSavedObjects.encryptionKey: "exchange_elk_key_32_characters_long"
 # Fleet (Elastic Agent yonetimi) - security=false ortaminda popup cikar, kapat gec
 # xpack.fleet.enabled: false
 
-# Dark mode
-uiSettings.overrides:
-  theme:darkMode: true
