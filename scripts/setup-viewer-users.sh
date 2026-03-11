@@ -90,7 +90,7 @@ create_user_and_notify() {
   # HTML mail içeriği
   MAIL_TEXT="Merhaba ${FULLNAME},
 
-FortiMail izleme portalina erisim bilgileriniz asagidadir.
+Elastic Mail Trace portalina erisim bilgileriniz asagidadir.
 
   Portal   : ${KIBANA_PUBLIC_URL}
   Kullanici: ${USERNAME}
@@ -102,7 +102,7 @@ Portala giris yaptiktan sonra sifrenizi degistirmeniz onerilir.
 
 Portal hakkinda:
 
-FortiMail uzerinden gecen e-posta trafikini gercek zamanli izlemenizi saglar.
+Sirketimize gelen ve giden e-posta trafikini gercek zamanli izlemenizi saglar.
 Uc ana bolum bulunmaktadir:
 
   - E-posta Guvenlik Paneli: Spam, virus, auth hatasi istatistikleri ve grafikler
@@ -121,7 +121,7 @@ BtcTurk Sistem & Altyapi Ekibi"
     -d "{
       \"params\": {
         \"to\": [\"${EMAIL}\"],
-        \"subject\": \"FortiMail Portal - Erisim Bilgileriniz\",
+        \"subject\": \"Elastic Mail Trace - Erisim Bilgileriniz\",
         \"message\": $(echo "$MAIL_TEXT" | python3 -c 'import sys,json; print(json.dumps(sys.stdin.read()))')
       }
     }")
