@@ -23,27 +23,27 @@ fi
 
 echo "=== Amazon SES Email Connector Kurulumu ==="
 
-# Mevcut connector'ı sil (varsa)
-EXISTING=$(curl -s -u "elastic:${ELASTIC_PASS}" "${KIBANA_URL}/api/actions/connectors" \
+# Mevcut "SES Mail Bildirimi" connector'ını sil (varsa)
+EXISTING_ID=$(curl -s -u "elastic:${ELASTIC_PASS}" "${KIBANA_URL}/api/actions/connectors" \
   -H "kbn-xsrf: true" | python3 -c "
 import sys, json
 data = json.load(sys.stdin)
 for c in data:
-  if c.get('id') == 'ses-alert-email':
+  if c.get('name') == 'SES Mail Bildirimi':
     print(c['id'])
 " 2>/dev/null)
 
-if [ -n "$EXISTING" ]; then
-  echo "Mevcut connector siliniyor..."
+if [ -n "$EXISTING_ID" ]; then
+  echo "Mevcut connector siliniyor (ID: $EXISTING_ID)..."
   curl -s -u "elastic:${ELASTIC_PASS}" -X DELETE \
-    "${KIBANA_URL}/api/actions/connector/ses-alert-email" \
+    "${KIBANA_URL}/api/actions/connector/${EXISTING_ID}" \
     -H "kbn-xsrf: true" > /dev/null
 fi
 
-# Connector oluştur
+# Connector oluştur (ID yok - Kibana UUID üretir)
 echo "Connector oluşturuluyor..."
 RESULT=$(curl -s -u "elastic:${ELASTIC_PASS}" -X POST \
-  "${KIBANA_URL}/api/actions/connector/ses-alert-email" \
+  "${KIBANA_URL}/api/actions/connector" \
   -H "Content-Type: application/json" \
   -H "kbn-xsrf: true" \
   -d "{
