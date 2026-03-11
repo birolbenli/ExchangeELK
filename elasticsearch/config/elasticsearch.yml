@@ -38,23 +38,7 @@ xpack.security.http.ssl.enabled: false
 xpack.security.transport.ssl.enabled: false
 # xpack.monitoring.collection.enabled kaldırıldı (ES 9'da yok; Elastic Agent kullanın)
 
-# ---- SAML / Entra ID SSO -----------------------------------
-xpack.security.authc.token.enabled: true
 
-xpack.security.authc.realms.native.native1:
-  order: 0
-
-xpack.security.authc.realms.saml.saml1:
-  order: 1
-  idp.metadata.path: saml/entra-metadata.xml
-  idp.entity_id: "https://sts.windows.net/c4c34dec-4224-42e4-9deb-24bee4551281/"
-  sp.entity_id: "kibana-exchange-elk"
-  sp.acs: "https://mailtrace.btcturk.local/api/security/saml/callback"
-  sp.logout: "https://mailtrace.btcturk.local/logout"
-  attributes.principal: "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"
-  attributes.name: "http://schemas.microsoft.com/identity/claims/displayname"
-  attributes.mail: "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"
-  attributes.groups: "http://schemas.microsoft.com/ws/2008/06/identity/claims/groups"
 
 # ---- Logging -----------------------------------------------
 logger.org.elasticsearch.discovery: WARN

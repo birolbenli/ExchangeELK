@@ -36,8 +36,6 @@ services:
       - /data/elasticsearch/backups:/data/elasticsearch/backups
       # --- config (repo'dan, read-only) ---
       - ./elasticsearch/config/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml:ro
-      # --- SAML metadata (Entra ID) ---
-      - ./elasticsearch/config/saml:/usr/share/elasticsearch/config/saml:ro
     ports:
       - "9200:9200"
       - "9300:9300"
