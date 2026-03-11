@@ -90,45 +90,28 @@ create_user_and_notify() {
   # HTML mail içeriği
   MAIL_TEXT="Merhaba ${FULLNAME},
 
-BtcTurk FortiMail Guvenlik Izleme Portali'na erisim bilgileriniz asagida yer almaktadir.
+FortiMail izleme portalina erisim bilgileriniz asagidadir.
 
-========================================
-GIRIS BILGILERINIZ
-========================================
-URL       : ${KIBANA_PUBLIC_URL}
-Kullanici : ${USERNAME}
-Sifre     : ${PASSWORD}
-========================================
+  Portal   : ${KIBANA_PUBLIC_URL}
+  Kullanici: ${USERNAME}
+  Sifre    : ${PASSWORD}
 
-BU PORTAL NE ISE YARAR?
-------------------------
-FortiMail E-posta Guvenlik Kapisi uzerinden gecen tum e-posta
-trafikini gercek zamanli olarak izlemenizi ve analiz etmenizi saglar.
+Portala giris yaptiktan sonra sifrenizi degistirmeniz onerilir.
 
-[1] E-posta Guvenlik Paneli
-    - Son 24 saat / 7 gun / 30 gunluk spam, virus ve auth hatasi istatistikleri
-    - Saatlik trafik grafigi ve tehdit dagilimi
-    - En cok spam gelen domainler ve IP adresleri
+---
 
-[2] Mesaj Arama Merkezi
-    - Gonderen/alici adresine, konuya veya tarih araligina gore mail arama
-    - Mailin spam/virus olarak isaretlenip isaretlenmedigini gorme
-    - DKIM, DMARC, SPF kontrol sonuclarini inceleme
-    - Teslim durumu takibi (kabul, red, erteleme)
+Portal hakkinda:
 
-[3] Log Arastirma Merkezi
-    - Ham log verilerine filtreli erisim
-    - Belirli IP veya domain uzerinde detayli analiz
-    - Zaman bazli trend grafiklerini inceleme
+FortiMail uzerinden gecen e-posta trafikini gercek zamanli izlemenizi saglar.
+Uc ana bolum bulunmaktadir:
 
-ONEMLI BILGILER
----------------
-- Hesabiniz salt okunur yetkiye sahiptir (goruntulemek only)
-- Sifrenizi ilk giristin ardindan degistirmeniz onerilir
-- Sifrenizi kimseyle paylasmayin
-- Teknik destek icin IT ekibiyle iletisime gecin
+  - E-posta Guvenlik Paneli: Spam, virus, auth hatasi istatistikleri ve grafikler
+  - Mesaj Arama Merkezi: Gonderici, alici, konu veya tarih araligina gore arama
+  - Log Arastirma Merkezi: Ham log analizi, IP/domain bazli detayli inceleme
 
-Iyi calismalar,
+Hesabiniz salt okunur yetkisine sahip olup yalnizca goruntuleme yapabilirsiniz.
+Teknik destek icin IT ekibiyle iletisime geciniz.
+
 BtcTurk Sistem & Altyapi Ekibi"
 
   SEND_RESULT=$(curl -s -u "elastic:${ELASTIC_PASS}" -X POST \
@@ -138,7 +121,7 @@ BtcTurk Sistem & Altyapi Ekibi"
     -d "{
       \"params\": {
         \"to\": [\"${EMAIL}\"],
-        \"subject\": \"[BtcTurk] FortiMail Izleme Portali - Erisim Bilgileriniz\",
+        \"subject\": \"FortiMail Portal - Erisim Bilgileriniz\",
         \"message\": $(echo "$MAIL_TEXT" | python3 -c 'import sys,json; print(json.dumps(sys.stdin.read()))')
       }
     }")
