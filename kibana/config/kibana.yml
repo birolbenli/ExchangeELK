@@ -38,6 +38,6 @@ xpack.actions.preconfigured:
       port: 587
       secure: false
     secrets:
-      user: "${SMTP_USER}"
-      password: "${SMTP_PASSWORD}"
+      user: "AKIA2PEHDDHP22M2Y4UF"
+      password: "BJl9w2Q/gIAxY0VxkjySLb6Ksfxu0AKpXGomYdFW44My"
 
