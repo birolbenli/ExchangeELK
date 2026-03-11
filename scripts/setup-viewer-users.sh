@@ -26,14 +26,22 @@ fi
 echo "Connector ID: $CONNECTOR_ID"
 echo ""
 
-# Kullanıcı listesi: "kullanici_adi|email|tam_ad"
-USERS=(
-  "ibrahim.selcuk|ibrahim.selcuk@btcturk.com|Ibrahim Selcuk"
-  "serdar.tasdelen|serdar.tasdelen@btcturk.com|Serdar Tasdelen"
-  "hakan.salih|hakan.salih@btcturk.com|Hakan Salih"
-  "gorkem.yilmaz|gorkem.yilmaz@btcturk.com|Gorkem Yilmaz"
-  "dogan.demirkiran|dogan.demirkiran@btcturk.com|Dogan Demirkiran"
-)
+# Kaç kullanıcı ekleneceğini sor
+echo ""
+read -rp "Kaç kullanıcı eklemek istiyorsunuz? " USER_COUNT
+
+USERS=()
+for (( i=1; i<=USER_COUNT; i++ )); do
+  echo ""
+  echo "── Kullanıcı $i / $USER_COUNT ──────────────────────────"
+  read -rp "  Tam ad        : " FULLNAME
+  read -rp "  E-posta       : " EMAIL
+  # Kullanıcı adını e-postadan otomatik türet (@ öncesi)
+  DEFAULT_USERNAME=$(echo "$EMAIL" | cut -d'@' -f1 | tr '.' '.')
+  read -rp "  Kullanıcı adı [${DEFAULT_USERNAME}]: " USERNAME
+  [ -z "$USERNAME" ] && USERNAME="$DEFAULT_USERNAME"
+  USERS+=("${USERNAME}|${EMAIL}|${FULLNAME}")
+done
 
 create_user_and_notify() {
   local USERNAME="$1"
