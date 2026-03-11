@@ -92,6 +92,8 @@ services:
       - ELASTICSEARCH_PASSWORD=${KIBANA_SYSTEM_PASSWORD}
       - SERVER_NAME=kibana
       - SERVER_HOST=0.0.0.0
+      - SMTP_USER=${SMTP_USER}
+      - SMTP_PASSWORD=${SMTP_PASSWORD}
     volumes:
       - ./kibana/config/kibana.yml:/usr/share/kibana/config/kibana.yml:ro
       # --- 2. diskte Kibana kalıcı veri (saved objects, sessions) ---
