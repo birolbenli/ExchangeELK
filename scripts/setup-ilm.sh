@@ -14,19 +14,22 @@
 set -euo pipefail
 
 ES="http://localhost:9200"
+ES_USER="${ELASTIC_USER:-elastic}"
+ES_PASS="${ELASTIC_PASSWORD:-}"
+AUTH="-u ${ES_USER}:${ES_PASS}"
 GREEN='\033[0;32m'; YELLOW='\033[1;33m'; RED='\033[0;31m'; NC='\033[0m'
 info()  { echo -e "${GREEN}[ILM]${NC}  $*"; }
 warn()  { echo -e "${YELLOW}[ILM]${NC}  $*"; }
 error() { echo -e "${RED}[ILM]${NC}  $*"; exit 1; }
 
 # Elasticsearch'e bağlantı kontrolü
-curl -sf "$ES/_cluster/health" > /dev/null 2>&1 || error "Elasticsearch ulaşılamıyor: $ES"
+curl -sf $AUTH "$ES/_cluster/health" > /dev/null 2>&1 || error "Elasticsearch ulaşılamıyor: $ES"
 
 info "ILM kurulumu başlıyor..."
 
 # ---- 1. ILM POLICY ------------------------------------------
 info "ILM policy uygulanıyor: exchange-logs-policy"
-curl -sf -X PUT "$ES/_ilm/policy/exchange-logs-policy" \
+curl -sf $AUTH -X PUT "$ES/_ilm/policy/exchange-logs-policy" \
     -H "Content-Type: application/json" \
     -d @- << 'EOF'
 {
@@ -83,7 +86,7 @@ info "ILM policy oluşturuldu."
 
 # ---- 2. COMPONENT TEMPLATE (settings) -----------------------
 info "Component template oluşturuluyor: exchange-logs-settings"
-curl -sf -X PUT "$ES/_component_template/exchange-logs-settings" \
+curl -sf $AUTH -X PUT "$ES/_component_template/exchange-logs-settings" \
     -H "Content-Type: application/json" \
     -d @- << 'EOF'
 {
@@ -108,7 +111,7 @@ EOF
 
 # ---- 3. COMPONENT TEMPLATE (mappings) -----------------------
 info "Component template oluşturuluyor: exchange-logs-mappings"
-curl -sf -X PUT "$ES/_component_template/exchange-logs-mappings" \
+curl -sf $AUTH -X PUT "$ES/_component_template/exchange-logs-mappings" \
     -H "Content-Type: application/json" \
     -d @- << 'EOF'
 {
@@ -189,7 +192,7 @@ EOF
 
 # ---- 4. INDEX TEMPLATE (2 component template'i birleştirir) --
 info "Index template oluşturuluyor: exchange-logs"
-curl -sf -X PUT "$ES/_index_template/exchange-logs" \
+curl -sf $AUTH -X PUT "$ES/_index_template/exchange-logs" \
     -H "Content-Type: application/json" \
     -d @- << 'EOF'
 {
@@ -224,7 +227,7 @@ info "Index template uygulandı. ILM otomatik aktif olacak."
 
 # ---- 6. SNAPSHOT REPOSITORY (yedekleme için) ----------------
 info "Snapshot repository kaydediliyor: exchange-backups"
-curl -sf -X PUT "$ES/_snapshot/exchange-backups" \
+curl -sf $AUTH -X PUT "$ES/_snapshot/exchange-backups" \
     -H "Content-Type: application/json" \
     -d @- << 'EOF'
 {
@@ -241,7 +244,7 @@ info "Snapshot repository hazır: /data/elasticsearch/backups"
 
 # ---- 7. SLM (Snapshot Lifecycle Management) -----------------
 info "Otomatik snapshot politikası kuruluyor: exchange-daily-snapshot"
-curl -sf -X PUT "$ES/_slm/policy/exchange-daily-snapshot" \
+curl -sf $AUTH -X PUT "$ES/_slm/policy/exchange-daily-snapshot" \
     -H "Content-Type: application/json" \
     -d @- << 'EOF'
 {
@@ -267,7 +270,7 @@ echo ""
 info "=== ILM KURULUM TAMAM ==="
 echo ""
 echo "  ILM Policy    :"
-curl -sf "$ES/_ilm/policy/exchange-logs-policy" | jq -r '
+curl -sf $AUTH "$ES/_ilm/policy/exchange-logs-policy" | jq -r '
   to_entries[0].value.policy.phases | 
   "  Hot    → " + (.hot.min_age // "0") + " - rollover " + (.hot.actions.rollover.max_age),
   "  Warm   → " + .warm.min_age + " - forcemerge + best_compression",
