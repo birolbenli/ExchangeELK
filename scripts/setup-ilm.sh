@@ -41,11 +41,6 @@ curl -sf $AUTH -X PUT "$ES/_ilm/policy/exchange-logs-policy" \
       "hot": {
         "min_age": "0ms",
         "actions": {
-          "rollover": {
-            "max_primary_shard_size": "10gb",
-            "max_age": "1d",
-            "max_docs": 10000000
-          },
           "set_priority": {
             "priority": 100
           }
