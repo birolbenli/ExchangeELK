@@ -1,5 +1,10 @@
 # Exchange Server Log Forwarding Setup Script
 # Run this script on each Exchange Server to set up log collection
+#
+#   .\setup-exchange-forwarding.ps1 -ELKServerIP "10.11.12.19" -InstallFilebeatAgent
+#   .\setup-exchange-forwarding.ps1 -ELKServerIP "10.11.12.19" -ResetRegistry
+#     → Filebeat registry silinir, ignore_older (48s) içindeki dosyalar yeniden okunur.
+#       5044 uzun süre refuse olduktan / domain join reboot sonrası takılırsa kullanın.
 
 param(
     [Parameter(Mandatory=$true)]
@@ -9,7 +14,10 @@ param(
     [string]$LogSharePath = "\\$ELKServerIP\exchange-logs",
     
     [Parameter(Mandatory=$false)]
-    [switch]$InstallFilebeatAgent
+    [switch]$InstallFilebeatAgent,
+
+    [Parameter(Mandatory=$false)]
+    [switch]$ResetRegistry
 )
 
 Write-Host "Exchange Server Log Forwarding Setup" -ForegroundColor Green
@@ -33,13 +41,12 @@ Write-Host "Exchange Server found at: $ExchangePath" -ForegroundColor Green
 
 # Define log directories (Z: sürücüsüne taşınan loglar dahil)
 $LogDirectories = @{
-    "MessageTracking" = "Z:\MessageTrackingLogs"
+    "MessageTracking" = Join-Path $ExchangePath "Logging\MessageTracking"
     "IIS"             = "C:\inetpub\logs\LogFiles"
-    "HttpProxy"       = "$ExchangePath\Logging\HttpProxy"
-    "MapiHttp"        = "$ExchangePath\Logging\MapiHttp"
-    "SMTP Receive"    = "Z:\SmtpReceive"
-    "SMTP Send"       = "Z:\SmtpSend"
-    "Connectivity"    = "Z:\ConnectivityLogs"
+    "HttpProxy"       = Join-Path $ExchangePath "Logging\HttpProxy"
+    "MapiHttp"        = Join-Path $ExchangePath "Logging\MapiHttp"
+    "SMTP Receive"    = Join-Path $ExchangePath "Logging\ProtocolLog\SmtpReceive"
+    "SMTP Send"       = Join-Path $ExchangePath "Logging\ProtocolLog\SmtpSend"
 }
 
 # Function to create network share access
@@ -87,76 +94,145 @@ function Install-FilebeatAgent {
         $ExtractedDir = Get-ChildItem "C:\Program Files\filebeat-*" | Select-Object -First 1
         Rename-Item $ExtractedDir.FullName $InstallPath
         
-        # Create Filebeat configuration
+        # Create Filebeat configuration (UTF-8 BOM'suz — YAML parse kırılmasın)
+        $ExBase = $ExchangePath.TrimEnd('\')
         $FilebeatConfig = @"
+queue.disk:
+  max_size: 2GB
+  path: C:\ProgramData\filebeat\queue
+
 filebeat.inputs:
 
-# Message Tracking Logs (Z: sürücüsü - .LOG uzantısı büyük harf)
-- type: log
+- type: filestream
   enabled: true
   id: exchange-message-tracking
+  take_over: true
   paths:
+    - '$ExBase\Logging\MessageTracking\*.LOG'
+    - '$ExBase\Logging\MessageTracking\*.log'
     - 'Z:\MessageTrackingLogs\*.LOG'
     - 'Z:\MessageTrackingLogs\*.log'
+  encoding: utf-8
+  exclude_lines: ['^#']
   tags: ["MessageTracking"]
+  fields:
+    log_type: message-tracking
   fields_under_root: true
-  scan_frequency: 15s
-  close_inactive: 5m
+  ignore_older: 48h
+  clean_inactive: 72h
+  clean_removed: false
+  prospector.scanner.check_interval: 10s
+  close.on_state_change.inactive: 5m
+  close.on_state_change.renamed: true
+  file_identity.path: ~
+  buffer_size: 32768
 
-# IIS W3C Logs (X-Forwarded-For aktif edilmistir)
-- type: log
+- type: filestream
   enabled: true
   id: exchange-iis
+  take_over: true
   paths:
     - 'C:\inetpub\logs\LogFiles\W3SVC*\*.log'
+  encoding: utf-8
+  exclude_lines: ['^#']
   tags: ["ExchangeIIS"]
+  fields:
+    log_type: iis
   fields_under_root: true
-  scan_frequency: 15s
-  close_inactive: 5m
+  ignore_older: 48h
+  clean_inactive: 72h
+  clean_removed: false
+  prospector.scanner.check_interval: 15s
+  close.on_state_change.inactive: 5m
+  file_identity.path: ~
+  buffer_size: 32768
 
-# HttpProxy Protocol Logs
-- type: log
+- type: filestream
   enabled: true
   id: exchange-httpproxy
+  take_over: true
   paths:
-    - 'C:\Program Files\Microsoft\Exchange Server\V15\Logging\HttpProxy\*\*.log'
+    - '$ExBase\Logging\HttpProxy\*\*.log'
+  encoding: utf-8
+  exclude_lines: ['^#']
   tags: ["HttpProxy"]
+  fields:
+    log_type: httpproxy
   fields_under_root: true
-  scan_frequency: 30s
-  close_inactive: 10m
+  ignore_older: 48h
+  clean_inactive: 72h
+  clean_removed: false
+  prospector.scanner.check_interval: 30s
+  close.on_state_change.inactive: 10m
+  file_identity.path: ~
+  buffer_size: 65536
 
-# MAPI HTTP Logs
-- type: log
+- type: filestream
   enabled: true
   id: exchange-mapihttp
+  take_over: true
   paths:
-    - 'C:\Program Files\Microsoft\Exchange Server\V15\Logging\MapiHttp\*\*.log'
+    - '$ExBase\Logging\MapiHttp\*\*.log'
+  encoding: utf-8
+  exclude_lines: ['^#']
   tags: ["MapiHttp"]
+  fields:
+    log_type: mapihttp
   fields_under_root: true
-  scan_frequency: 30s
-  close_inactive: 10m
+  ignore_older: 48h
+  clean_inactive: 72h
+  clean_removed: false
+  prospector.scanner.check_interval: 30s
+  close.on_state_change.inactive: 10m
+  file_identity.path: ~
+  buffer_size: 65536
 
-# SMTP Receive Logs (Z: sürücüsü)
-- type: log
+- type: filestream
   enabled: true
   id: exchange-smtp-receive
+  take_over: true
   paths:
+    - '$ExBase\Logging\ProtocolLog\SmtpReceive\*.log'
     - 'Z:\SmtpReceive\*.log'
+  encoding: utf-8
+  exclude_lines: ['^#']
   tags: ["SmtpReceive"]
+  fields:
+    log_type: smtp-receive
   fields_under_root: true
-  scan_frequency: 15s
-  close_inactive: 5m
+  ignore_older: 48h
+  clean_inactive: 72h
+  clean_removed: false
+  prospector.scanner.check_interval: 15s
+  close.on_state_change.inactive: 5m
+  file_identity.path: ~
+  buffer_size: 32768
 
-# SMTP Send Logs (Z: sürücüsü)
-- type: log
+- type: filestream
   enabled: true
   id: exchange-smtp-send
+  take_over: true
   paths:
+    - '$ExBase\Logging\ProtocolLog\SmtpSend\*.log'
     - 'Z:\SmtpSend\*.log'
+  encoding: utf-8
+  exclude_lines: ['^#']
   tags: ["SmtpSend"]
+  fields:
+    log_type: smtp-send
   fields_under_root: true
-  scan_frequency: 15s
-  close_inactive: 5m
+  ignore_older: 48h
+  clean_inactive: 72h
+  clean_removed: false
+  prospector.scanner.check_interval: 15s
+  close.on_state_change.inactive: 5m
+  file_identity.path: ~
+  buffer_size: 32768
+
+path.data: C:\ProgramData\filebeat
+filebeat.registry.path: C:\ProgramData\filebeat\registry
+filebeat.registry.flush: 5s
+filebeat.shutdown_timeout: 30s
 
 processors:
   - add_host_metadata: ~
@@ -168,16 +244,26 @@ output.logstash:
   hosts: ["${ELKServerIP}:5044"]
   compression_level: 3
   bulk_max_size: 1024
+  pipelining: 0
+  ttl: 60s
+  timeout: 30s
+  max_retries: -1
+  backoff.init: 1s
+  backoff.max: 60s
+  slow_start: true
+  loadbalance: false
+  ssl.enabled: false
 
-logging.level: warning
+logging.level: info
 logging.to_files: true
 logging.files:
   path: C:\ProgramData\filebeat\logs
   name: filebeat
   keepfiles: 7
 "@
-        
-        $FilebeatConfig | Out-File -FilePath "$InstallPath\filebeat.yml" -Encoding UTF8
+
+        $utf8NoBom = New-Object System.Text.UTF8Encoding $false
+        [System.IO.File]::WriteAllText("$InstallPath\filebeat.yml", $FilebeatConfig, $utf8NoBom)
         
         # Install as Windows service
         Set-Location $InstallPath
@@ -192,6 +278,33 @@ logging.files:
     catch {
         Write-Host "Error installing Filebeat: $($_.Exception.Message)" -ForegroundColor Red
         return $false
+    }
+}
+
+# 5044 uzun süre refuse / domain join reboot sonrası takılan registry
+function Reset-FilebeatRegistry {
+    Write-Host "Filebeat registry sifirlaniyor (ignore_older=48h yeniden okunur)..." -ForegroundColor Yellow
+    $svc = Get-Service -Name "filebeat" -ErrorAction SilentlyContinue
+    if ($svc -and $svc.Status -eq "Running") {
+        Stop-Service filebeat -Force
+    }
+    $stamp = Get-Date -Format "yyyyMMdd-HHmmss"
+    $paths = @(
+        "C:\ProgramData\filebeat\registry",
+        "C:\ProgramData\filebeat\data",
+        "C:\Program Files\Filebeat\data"
+    )
+    foreach ($p in $paths) {
+        if (Test-Path $p) {
+            $bak = "$p.bak-$stamp"
+            Rename-Item -Path $p -NewName (Split-Path $bak -Leaf)
+            Write-Host "  $p -> $bak" -ForegroundColor Yellow
+        }
+    }
+    New-Item -ItemType Directory -Path "C:\ProgramData\filebeat\registry" -Force | Out-Null
+    if ($svc) {
+        Start-Service filebeat
+        Write-Host "Filebeat yeniden baslatildi." -ForegroundColor Green
     }
 }
 
@@ -226,8 +339,14 @@ if ($InstallFilebeatAgent) {
     $filebeatSetup = Install-FilebeatAgent
 }
 
-# Setup Windows Event Log forwarding
-$eventLogSetup = Setup-EventLogForwarding
+if ($ResetRegistry) {
+    Reset-FilebeatRegistry
+}
+
+# Setup Windows Event Log forwarding (yalnızca kurulumda)
+if ($InstallFilebeatAgent -and -not $ResetRegistry) {
+    $eventLogSetup = Setup-EventLogForwarding
+}
 
 # Display log directory information
 Write-Host "`nExchange Log Directories:" -ForegroundColor Yellow

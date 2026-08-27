@@ -181,7 +181,7 @@ ExchangeELK/
 
 | Filebeat Tag | Log Konumu (Exchange) | Elasticsearch Index | Pipeline |
 |---|---|---|---|
-| `ExchangeMsgTrack` | `%ExchangePath%\Logging\MessageTracking\*.log` | `exchange-msgtrk-YYYY.MM.dd` | pipeline-message-tracking |
+| `MessageTracking` (alias `ExchangeMsgTrack`) | `%ExchangePath%\Logging\MessageTracking\*.log` | `exchange-msgtrk-YYYY.MM.dd` | pipeline-message-tracking |
 | `ExchangeIIS` | `C:\inetpub\logs\LogFiles\W3SVC*\*.log` | `exchange-iis-YYYY.MM.dd` | pipeline-iis |
 | `HttpProxy` | `%ExchangePath%\Logging\HttpProxy\*\*.log` | `exchange-httpproxy-YYYY.MM.dd` | pipeline-http-protocol |
 | `MapiHttp` | `%ExchangePath%\Logging\MapiHttp\Emsmdb\*.log` | `exchange-mapihttp-YYYY.MM.dd` | pipeline-http-protocol |
@@ -337,6 +337,37 @@ curl -s "http://localhost:9200/exchange-iis-*/_search" \
 Test-NetConnection -ComputerName 10.11.12.19 -Port 5044
 Restart-Service filebeat
 ```
+
+5044 uzun süre refuse olduysa (domain join/reboot) registry'yi sıfırlayın; son 48 saat yeniden okunur:
+
+```powershell
+.\scripts\setup-exchange-forwarding.ps1 -ELKServerIP "10.11.12.19" -ResetRegistry
+```
+
+### Exchange loglari 5044'e geliyor ama ES'te yok
+
+Ubuntu `/data/exchange-logs` kullanılmaz; kaynak Windows Filebeat'tir. Pull sonrası Logstash'i recreate edin (`pipelines.yml` hot reload olmaz):
+
+```bash
+cd /opt/exchange-elk
+git pull
+chmod +x scripts/*.sh
+docker compose up -d --force-recreate logstash
+docker compose stop filebeat 2>/dev/null || true
+docker rm filebeat 2>/dev/null || true
+# docker Filebeat /data/exchange-logs kullanilmiyor; Windows Filebeat asil kaynak
+# PQ bozuksa:
+sudo ./scripts/reset-logstash-queues.sh
+```
+
+Kontrol:
+
+```bash
+curl -s http://localhost:9600/_node/stats/pipelines | python3 -m json.tool
+curl -s -u elastic:$ELASTIC_PASSWORD "http://localhost:9200/_cat/indices/exchange-*?v&s=index:desc"
+```
+
+`exchange-unmatched-*` doluyorsa tag/path eşleşmiyor demektir; `exchange-msgtrk-YYYY.MM.dd` bugünün tarihiyle artıyorsa düzeltme işe yaramıştır.
 
 ---
 

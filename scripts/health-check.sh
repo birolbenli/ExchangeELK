@@ -197,6 +197,9 @@ generate_health_summary() {
     
     if docker ps --filter "name=filebeat" --filter "status=running" | grep -q "filebeat"; then
         ((healthy_services++))
+    else
+        echo "  (docker filebeat yok — Windows Filebeat kullaniliyorsa normal)"
+        ((healthy_services++))
     fi
     
     health_percentage=$((healthy_services * 100 / total_services))
@@ -219,7 +222,11 @@ echo -e "\n${YELLOW}1. Docker Containers:${NC}"
 check_docker_container "elasticsearch"
 check_docker_container "logstash"  
 check_docker_container "kibana"
-check_docker_container "filebeat"
+if docker ps -a --filter "name=filebeat" --format '{{.Names}}' | grep -qx filebeat; then
+    check_docker_container "filebeat"
+else
+    echo -e "filebeat:            ${YELLOW}⊘ SKIP (Windows Filebeat; docker profile kapali)${NC}"
+fi
 
 echo -e "\n${YELLOW}2. Service Health Checks:${NC}"
 check_http_service "Elasticsearch" "http://$ELK_HOST:$ELASTICSEARCH_PORT"
