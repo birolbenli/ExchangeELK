@@ -14,6 +14,8 @@ pipeline.ordered: auto
 pipeline.workers: 2
 pipeline.batch.size: 500
 pipeline.batch.delay: 50
+# Filebeat tags / path alanları ECS ile kaymasın (FortiMail ve Exchange)
+pipeline.ecs_compatibility: "disabled"
 
 # ---- Persistent Queue (PQ) ----------------------------------
 # PQ etkin - Logstash dursa bile log kaybı olmaz

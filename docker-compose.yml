@@ -80,8 +80,8 @@ services:
       test: ["CMD-SHELL", "curl -sf http://localhost:9600 || exit 1"]
       interval: 30s
       timeout: 10s
-      retries: 3
-      start_period: 60s
+      retries: 8
+      start_period: 180s
 
   kibana:
     image: docker.elastic.co/kibana/kibana:9.3.1
@@ -111,9 +111,13 @@ services:
       retries: 5
       start_period: 90s
 
+  # Ubuntu Filebeat KAPALI (varsayılan). /data/exchange-logs boş/kullanılmıyor;
+  # asıl kaynak Windows Filebeat → host:5044.
+  # Eski rsync/Samba yolu: docker compose --profile legacy-local-logs up -d
   filebeat:
     image: docker.elastic.co/beats/filebeat:9.3.1
     container_name: filebeat
+    profiles: ["legacy-local-logs"]
     user: root
     environment:
       - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
@@ -121,17 +125,14 @@ services:
       - ELASTICSEARCH_PASSWORD=${ELASTIC_PASSWORD}
       - LOGSTASH_HOSTS=logstash:5044
     volumes:
-      - ./filebeat/config/filebeat.yml:/usr/share/filebeat/filebeat.yml:ro
-      - ./filebeat/modules.d:/usr/share/filebeat/modules.d:ro
+      - ./filebeat/config/filebeat.docker.yml:/usr/share/filebeat/filebeat.yml:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      # --- Exchange Server log dosyaları (Windows sunuculardan rsync/Samba ile /data'ya alınır) ---
       - /data/exchange-logs/message-tracking:/exchange-logs/message-tracking:ro
       - /data/exchange-logs/iis:/exchange-logs/iis:ro
       - /data/exchange-logs/httpproxy:/exchange-logs/httpproxy:ro
       - /data/exchange-logs/mapihttp:/exchange-logs/mapihttp:ro
       - /data/exchange-logs/smtp-receive:/exchange-logs/smtp-receive:ro
       - /data/exchange-logs/smtp-send:/exchange-logs/smtp-send:ro
-      # --- Filebeat registry (2. disk, restart'ta kaldığı yerden devam eder) ---
       - /data/logstash/filebeat-registry:/usr/share/filebeat/data
     networks:
       - elk-network

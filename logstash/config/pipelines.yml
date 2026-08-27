@@ -3,12 +3,20 @@
 #
 # Mimari (Pipeline-to-Pipeline):
 #
-#  Filebeat (port 5044)
+#  Windows Filebeat (port 5044)
 #       ↓
 #  [exchange-router]  ← tüm loglar tek noktaya girer
-#       ↓ tag'e göre yönlendirir
-#  ┌─────────────────────────────────────────────────┐
-#  [msgtrk] [iis] [http-protocol] [smtp]
+#       ↓ tag / log_type / path
+#  [msgtrk] [iis] [http-protocol] [smtp] [unmatched]
+#
+# Ubuntu docker Filebeat + /data/exchange-logs KULLANILMIYOR.
+# ecs_compatibility: disabled — Filebeat tags/path alanları kaymasın.
+#
+# Domain join / reboot sonrası 5044 refuse: Logstash PQ kurtarana kadar
+# beats input kapalı kalabilir. PQ bozulursa:
+#   docker compose stop logstash
+#   rm -rf /data/logstash/data/queue/exchange-*
+#   docker compose start logstash
 # ================================================================
 
 # --- Giriş (Router) -------------------------------------------
@@ -16,7 +24,9 @@
   path.config: "/usr/share/logstash/pipeline/pipeline-router.conf"
   pipeline.workers: 2
   pipeline.batch.size: 1000
+  pipeline.ecs_compatibility: "disabled"
   queue.type: persisted
+  queue.max_bytes: 2gb
   dead_letter_queue.enable: true
 
 # --- Downstream: Message Tracking ------------------------------
@@ -24,7 +34,9 @@
   path.config: "/usr/share/logstash/pipeline/pipeline-message-tracking.conf"
   pipeline.workers: 2
   pipeline.batch.size: 500
+  pipeline.ecs_compatibility: "disabled"
   queue.type: persisted
+  queue.max_bytes: 2gb
   dead_letter_queue.enable: true
 
 # --- Downstream: IIS W3C Logs ----------------------------------
@@ -32,6 +44,7 @@
   path.config: "/usr/share/logstash/pipeline/pipeline-iis.conf"
   pipeline.workers: 2
   pipeline.batch.size: 500
+  pipeline.ecs_compatibility: "disabled"
   queue.type: persisted
   dead_letter_queue.enable: true
 
@@ -40,6 +53,7 @@
   path.config: "/usr/share/logstash/pipeline/pipeline-http-protocol.conf"
   pipeline.workers: 2
   pipeline.batch.size: 500
+  pipeline.ecs_compatibility: "disabled"
   queue.type: persisted
   dead_letter_queue.enable: true
 
@@ -48,6 +62,16 @@
   path.config: "/usr/share/logstash/pipeline/pipeline-smtp.conf"
   pipeline.workers: 1
   pipeline.batch.size: 200
+  pipeline.ecs_compatibility: "disabled"
+  queue.type: persisted
+  dead_letter_queue.enable: true
+
+# --- Router'da eşleşmeyen event'ler (sessiz drop yerine) -------
+- pipeline.id: exchange-unmatched
+  path.config: "/usr/share/logstash/pipeline/pipeline-unmatched.conf"
+  pipeline.workers: 1
+  pipeline.batch.size: 200
+  pipeline.ecs_compatibility: "disabled"
   queue.type: persisted
   dead_letter_queue.enable: true
 
@@ -57,5 +81,6 @@
   path.config: "/usr/share/logstash/pipeline/pipeline-fortimail.conf"
   pipeline.workers: 2
   pipeline.batch.size: 500
+  pipeline.ecs_compatibility: "disabled"
   queue.type: persisted
   dead_letter_queue.enable: true

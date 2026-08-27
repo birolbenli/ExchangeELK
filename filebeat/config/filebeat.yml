@@ -1,128 +1,185 @@
 # ================================================================
-# Filebeat Configuration - Exchange ELK Stack
+# Filebeat — Exchange Server (Windows)
 #
-# Tüm log türleri tek bir port'a gider, Logstash router pipeline
-# tag'e göre yönlendirir (Pipeline-to-Pipeline mimarisi).
+# Asıl log yolu: bu host üzerindeki Exchange Logging dizinleri.
+# Ubuntu /data/exchange-logs ve docker Filebeat KULLANILMIYOR.
 #
-#   Log Türü              Tag               Hedef (Logstash)
+#   Log Türü              Tag               log_type
 #   ─────────────────     ──────────────    ─────────────────
-#   Message Tracking      MessageTracking   5044 → exchange-message-tracking
-#   IIS W3C               ExchangeIIS       5044 → exchange-iis
-#   HTTP Protocol         HttpProxy         5044 → exchange-http-protocol
-#   MAPI HTTP             MapiHttp          5044 → exchange-http-protocol
-#   SMTP Receive          SmtpReceive       5044 → exchange-smtp
-#   SMTP Send             SmtpSend          5044 → exchange-smtp
+#   Message Tracking      MessageTracking   message-tracking
+#   IIS W3C               ExchangeIIS       iis
+#   HTTP Protocol         HttpProxy         httpproxy
+#   MAPI HTTP             MapiHttp          mapihttp
+#   SMTP Receive          SmtpReceive       smtp-receive
+#   SMTP Send             SmtpSend          smtp-send
 #
-# Exchange Server'lardaki log dizinleri Ubuntu'ya şu yollardan
-# erişilir (Filebeat Windows ajanı doğrudan logları gönderir):
-#   /exchange-logs/message-tracking/  → %ExchangePath%\Logging\MessageTracking\
-#   /exchange-logs/httpproxy/         → %ExchangePath%\Logging\HttpProxy\*\
-#   /exchange-logs/mapihttp/          → %ExchangePath%\Logging\MapiHttp\Emsmdb\
-#   /exchange-logs/iis/               → C:\inetpub\logs\LogFiles\W3SVC*\
-#   /exchange-logs/smtp-receive/      → %ExchangePath%\Logging\ProtocolLog\SmtpReceive\
-#   /exchange-logs/smtp-send/         → %ExchangePath%\Logging\ProtocolLog\SmtpSend\
+# Kurulum: scripts/setup-exchange-forwarding.ps1
+#   -ELKServerIP "10.11.12.19" -InstallFilebeatAgent
+# Registry sıfırlama (5044 uzun süre refuse olduysa, son 48s):
+#   -ResetRegistry
 # ================================================================
+
+# 5044 refuse / reboot sonrası event kaybını azalt (disk kuyruğu)
+queue.disk:
+  max_size: 2GB
+  path: C:\ProgramData\filebeat\queue
 
 filebeat.inputs:
 
 # ------------------------------------------------------------------
-# 1. Message Tracking → port 5044
+# 1. Message Tracking
 # ------------------------------------------------------------------
 - type: filestream
   enabled: true
   id: exchange-message-tracking
+  take_over: true
   paths:
-    - /exchange-logs/message-tracking/*.log
+    - 'C:\Program Files\Microsoft\Exchange Server\V15\Logging\MessageTracking\*.LOG'
+    - 'C:\Program Files\Microsoft\Exchange Server\V15\Logging\MessageTracking\*.log'
+    - 'Z:\MessageTrackingLogs\*.LOG'
+    - 'Z:\MessageTrackingLogs\*.log'
+  encoding: utf-8
+  exclude_lines: ['^#']
   tags: ["MessageTracking"]
+  fields:
+    log_type: message-tracking
   fields_under_root: true
-  prospector.scanner.check_interval: 15s
+  ignore_older: 48h
+  clean_inactive: 72h
+  clean_removed: false
+  prospector.scanner.check_interval: 10s
   close.on_state_change.inactive: 5m
+  close.on_state_change.renamed: true
+  file_identity.path: ~
   buffer_size: 32768
-  # #Fields / #Version başlıklarını Filebeat'te düşürme (Logstash'te atılacak)
 
 # ------------------------------------------------------------------
-# 2. IIS W3C logs → 5044 → exchange-iis pipeline
-#    X-Forwarded-For (OrgclientIP) aktif edilmiştir.
+# 2. IIS W3C
 # ------------------------------------------------------------------
 - type: filestream
   enabled: true
   id: exchange-iis
+  take_over: true
   paths:
-    - /exchange-logs/iis/*.log
-    - /exchange-logs/iis/**/*.log
+    - 'C:\inetpub\logs\LogFiles\W3SVC*\*.log'
+  encoding: utf-8
+  exclude_lines: ['^#']
   tags: ["ExchangeIIS"]
+  fields:
+    log_type: iis
   fields_under_root: true
+  ignore_older: 48h
+  clean_inactive: 72h
+  clean_removed: false
   prospector.scanner.check_interval: 15s
   close.on_state_change.inactive: 5m
+  file_identity.path: ~
   buffer_size: 32768
 
 # ------------------------------------------------------------------
-# 3a. HttpProxy Protocol logs → 5044 → exchange-http-protocol pipeline
+# 3a. HttpProxy
 # ------------------------------------------------------------------
 - type: filestream
   enabled: true
   id: exchange-httpproxy
+  take_over: true
   paths:
-    - /exchange-logs/httpproxy/*.log
-    - /exchange-logs/httpproxy/**/*.log
+    - 'C:\Program Files\Microsoft\Exchange Server\V15\Logging\HttpProxy\*\*.log'
+  encoding: utf-8
+  exclude_lines: ['^#']
   tags: ["HttpProxy"]
+  fields:
+    log_type: httpproxy
   fields_under_root: true
+  ignore_older: 48h
+  clean_inactive: 72h
+  clean_removed: false
   prospector.scanner.check_interval: 30s
   close.on_state_change.inactive: 10m
+  file_identity.path: ~
   buffer_size: 65536
 
 # ------------------------------------------------------------------
-# 3b. MAPI HTTP logs → 5044 → exchange-http-protocol pipeline
+# 3b. MAPI HTTP
 # ------------------------------------------------------------------
 - type: filestream
   enabled: true
   id: exchange-mapihttp
+  take_over: true
   paths:
-    - /exchange-logs/mapihttp/*.log
-    - /exchange-logs/mapihttp/**/*.log
+    - 'C:\Program Files\Microsoft\Exchange Server\V15\Logging\MapiHttp\*\*.log'
+    - 'C:\Program Files\Microsoft\Exchange Server\V15\Logging\MapiHttp\Emsmdb\*.log'
+  encoding: utf-8
+  exclude_lines: ['^#']
   tags: ["MapiHttp"]
+  fields:
+    log_type: mapihttp
   fields_under_root: true
+  ignore_older: 48h
+  clean_inactive: 72h
+  clean_removed: false
   prospector.scanner.check_interval: 30s
   close.on_state_change.inactive: 10m
+  file_identity.path: ~
   buffer_size: 65536
 
 # ------------------------------------------------------------------
-# 4a. SMTP Receive logs → 5044 → exchange-smtp pipeline
+# 4a. SMTP Receive
 # ------------------------------------------------------------------
 - type: filestream
   enabled: true
   id: exchange-smtp-receive
+  take_over: true
   paths:
-    - /exchange-logs/smtp-receive/*.log
+    - 'C:\Program Files\Microsoft\Exchange Server\V15\Logging\ProtocolLog\SmtpReceive\*.log'
+    - 'Z:\SmtpReceive\*.log'
+  encoding: utf-8
+  exclude_lines: ['^#']
   tags: ["SmtpReceive"]
+  fields:
+    log_type: smtp-receive
   fields_under_root: true
+  ignore_older: 48h
+  clean_inactive: 72h
+  clean_removed: false
   prospector.scanner.check_interval: 15s
   close.on_state_change.inactive: 5m
+  file_identity.path: ~
   buffer_size: 32768
 
 # ------------------------------------------------------------------
-# 4b. SMTP Send logs → 5044 → exchange-smtp pipeline
+# 4b. SMTP Send
 # ------------------------------------------------------------------
 - type: filestream
   enabled: true
   id: exchange-smtp-send
+  take_over: true
   paths:
-    - /exchange-logs/smtp-send/*.log
+    - 'C:\Program Files\Microsoft\Exchange Server\V15\Logging\ProtocolLog\SmtpSend\*.log'
+    - 'Z:\SmtpSend\*.log'
+  encoding: utf-8
+  exclude_lines: ['^#']
   tags: ["SmtpSend"]
+  fields:
+    log_type: smtp-send
   fields_under_root: true
+  ignore_older: 48h
+  clean_inactive: 72h
+  clean_removed: false
   prospector.scanner.check_interval: 15s
   close.on_state_change.inactive: 5m
+  file_identity.path: ~
   buffer_size: 32768
 
 # ================================================================
-# Registry (2. disk - restart'ta kaldığı yerden devam eder)
+# Registry — reboot / domain join sonrası kaldığı yerden devam
+# path.data altında tutulur (Windows servis varsayılanı ProgramData)
 # ================================================================
-filebeat.registry.path: /usr/share/filebeat/data
-filebeat.shutdown_timeout: 60s
+path.data: C:\ProgramData\filebeat
+filebeat.registry.path: C:\ProgramData\filebeat\registry
+filebeat.registry.flush: 5s
+filebeat.shutdown_timeout: 30s
 
-# ================================================================
-# Processors
-# ================================================================
 processors:
   - add_host_metadata:
       when.not.contains.tags: forwarded
@@ -136,40 +193,29 @@ processors:
         - "log.file.inode"
       ignore_missing: true
 
-# ================================================================
-# Outputs - Tüm loglar tek porta → Logstash router pipeline
-# Tag'e göre ayrım Logstash içinde pipeline-router.conf'ta yapılır.
-# ================================================================
+# 5044 kısa süre refuse olsa bile sonsuz retry + pipelining kapalı
+# (pipelining, Logstash restart sonrası ACK kaybına yol açabiliyor)
 output.logstash:
-  hosts:
-    - "logstash:5044"   # Tek port, tüm log türleri
+  hosts: ["10.11.12.19:5044"]
+  compression_level: 3
+  bulk_max_size: 1024
+  pipelining: 0
+  ttl: 60s
+  timeout: 30s
+  max_retries: -1
+  backoff.init: 1s
+  backoff.max: 60s
+  slow_start: true
+  loadbalance: false
+  ssl.enabled: false
 
-# ================================================================
-# Monitoring
-# ================================================================
-monitoring.enabled: true
-monitoring.elasticsearch:
-  hosts: ["http://elasticsearch:9200"]
-  username: "elastic"
-  password: "${ELASTICSEARCH_PASSWORD}"
-
-# ================================================================
-# Logging
-# ================================================================
-logging.level: warning
+logging.level: info
 logging.to_files: true
 logging.files:
-  path: /var/log/filebeat
+  path: C:\ProgramData\filebeat\logs
   name: filebeat
   keepfiles: 7
-  permissions: 0644
+  permissions: "0644"
 
-# ================================================================
-# Config reload (yeni log dizini eklenirse otomatik algıla)
-# ================================================================
-filebeat.config:
-  inputs:
-    enabled: true
-    path: /usr/share/filebeat/inputs.d/*.yml
-    reload.enabled: true
-    reload.period: 60s
+logging.metrics.enabled: true
+logging.metrics.period: 60s

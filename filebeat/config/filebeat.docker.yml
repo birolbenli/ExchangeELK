@@ -1,0 +1,128 @@
+# ================================================================
+# Filebeat — Ubuntu Docker (OPSİYONEL / legacy)
+#
+# /data/exchange-logs boş ve kullanılmıyor. Asıl kaynak Windows
+# Filebeat (filebeat/config/filebeat.yml). Bu dosya yalnızca
+#   docker compose --profile legacy-local-logs up -d
+# ile rsync/Samba kopyası okunacaksa kullanılır.
+# ================================================================
+
+filebeat.inputs:
+
+- type: filestream
+  enabled: true
+  id: exchange-message-tracking
+  paths:
+    - /exchange-logs/message-tracking/*.log
+  tags: ["MessageTracking"]
+  fields:
+    log_type: message-tracking
+  fields_under_root: true
+  prospector.scanner.check_interval: 15s
+  close.on_state_change.inactive: 5m
+  buffer_size: 32768
+
+- type: filestream
+  enabled: true
+  id: exchange-iis
+  paths:
+    - /exchange-logs/iis/*.log
+    - /exchange-logs/iis/**/*.log
+  tags: ["ExchangeIIS"]
+  fields:
+    log_type: iis
+  fields_under_root: true
+  prospector.scanner.check_interval: 15s
+  close.on_state_change.inactive: 5m
+  buffer_size: 32768
+
+- type: filestream
+  enabled: true
+  id: exchange-httpproxy
+  paths:
+    - /exchange-logs/httpproxy/*.log
+    - /exchange-logs/httpproxy/**/*.log
+  tags: ["HttpProxy"]
+  fields:
+    log_type: httpproxy
+  fields_under_root: true
+  prospector.scanner.check_interval: 30s
+  close.on_state_change.inactive: 10m
+  buffer_size: 65536
+
+- type: filestream
+  enabled: true
+  id: exchange-mapihttp
+  paths:
+    - /exchange-logs/mapihttp/*.log
+    - /exchange-logs/mapihttp/**/*.log
+  tags: ["MapiHttp"]
+  fields:
+    log_type: mapihttp
+  fields_under_root: true
+  prospector.scanner.check_interval: 30s
+  close.on_state_change.inactive: 10m
+  buffer_size: 65536
+
+- type: filestream
+  enabled: true
+  id: exchange-smtp-receive
+  paths:
+    - /exchange-logs/smtp-receive/*.log
+  tags: ["SmtpReceive"]
+  fields:
+    log_type: smtp-receive
+  fields_under_root: true
+  prospector.scanner.check_interval: 15s
+  close.on_state_change.inactive: 5m
+  buffer_size: 32768
+
+- type: filestream
+  enabled: true
+  id: exchange-smtp-send
+  paths:
+    - /exchange-logs/smtp-send/*.log
+  tags: ["SmtpSend"]
+  fields:
+    log_type: smtp-send
+  fields_under_root: true
+  prospector.scanner.check_interval: 15s
+  close.on_state_change.inactive: 5m
+  buffer_size: 32768
+
+filebeat.registry.path: /usr/share/filebeat/data
+filebeat.registry.flush: 5s
+filebeat.shutdown_timeout: 60s
+
+processors:
+  - add_host_metadata:
+      when.not.contains.tags: forwarded
+  - drop_fields:
+      fields:
+        - "agent.ephemeral_id"
+        - "ecs"
+        - "input.type"
+        - "log.offset"
+        - "log.file.device_id"
+        - "log.file.inode"
+      ignore_missing: true
+
+output.logstash:
+  hosts:
+    - "logstash:5044"
+  backoff.init: 1s
+  backoff.max: 60s
+  max_retries: -1
+  bulk_max_size: 1024
+  pipelining: 0
+  ttl: 60s
+  timeout: 30s
+  slow_start: true
+
+logging.level: warning
+logging.to_files: true
+logging.files:
+  path: /var/log/filebeat
+  name: filebeat
+  keepfiles: 7
+  permissions: "0644"

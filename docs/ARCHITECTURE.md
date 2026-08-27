@@ -63,7 +63,7 @@ Filebeat
   |
   v  port 5044
 pipeline-router
-  |-- tag: ExchangeMsgTrack  --> pipeline-message-tracking
+  |-- tag: MessageTracking (alias: ExchangeMsgTrack)  --> pipeline-message-tracking
   |-- tag: ExchangeIIS       --> pipeline-iis
   |-- tag: HttpProxy         --> pipeline-http-protocol
   |-- tag: MapiHttp          --> pipeline-http-protocol
